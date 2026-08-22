@@ -2290,6 +2290,31 @@
     backdrop-filter: blur(3px);
     z-index: 590;
   }
+
+  /* Audience Mode: Zero manual progression / strictly passive observation */
+  body.audience-mode #crtFilerActionsLeft,
+  body.audience-mode #crtFilerActionsCenter,
+  body.audience-mode #crtVoiceSpeedGroup,
+  body.audience-mode #btnRaiseObjection,
+  body.audience-mode #btnIntroduceExhibit,
+  body.audience-mode #btnJudgeRuling,
+  body.audience-mode #btnCourtNextAction,
+  body.audience-mode #btnAutoPlayHearings,
+  body.audience-mode #btnFastForwardVerdict,
+  body.audience-mode #crtResolvedActionsContainer {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+  body.audience-mode #crtAudienceBanner {
+    display: flex !important;
+  }
+  body.audience-mode #crtAudienceModePill {
+    display: inline-block !important;
+  }
+  body.audience-mode #crtLiveBadge {
+    display: none !important;
+  }
 </style>
 </head>
 <body>
@@ -5184,6 +5209,11 @@ let audiencePlaybackTimer = null;
 
 async function loadBenchmarkDemo(isAudience = false) {
   isAudienceMode = Boolean(isAudience);
+  if (isAudienceMode) {
+    document.body.classList.add('audience-mode');
+  } else {
+    document.body.classList.remove('audience-mode');
+  }
   try {
     // 1. If active case already set and valid, open it directly
     if (activeCaseId) {
@@ -5244,12 +5274,14 @@ function openEnterCourtChoiceModal() {
 function enterCourtAsAudience() {
   closeModal('modalEnterCourtChoice');
   isAudienceMode = true;
+  document.body.classList.add('audience-mode');
   loadBenchmarkDemo(true);
 }
 
 function enterCourtAsFilingAdvocate() {
   closeModal('modalEnterCourtChoice');
   isAudienceMode = false;
+  document.body.classList.remove('audience-mode');
   startFilingWizard();
 }
 
@@ -6762,6 +6794,11 @@ async function openCourtroomDirectly(caseId, audienceMode = null) {
   if (audienceMode !== null) {
     isAudienceMode = Boolean(audienceMode);
   }
+  if (isAudienceMode) {
+    document.body.classList.add('audience-mode');
+  } else {
+    document.body.classList.remove('audience-mode');
+  }
   stopAudienceAutonomousPlayback();
 
   try {
@@ -6781,6 +6818,7 @@ async function openCourtroomDirectly(caseId, audienceMode = null) {
 
     // In Audience Mode: Autoplay begins immediately when courtroom loads
     if (isAudienceMode) {
+      document.body.classList.add('audience-mode');
       startAudienceAutonomousPlayback();
     }
   } catch (err) {
@@ -6807,6 +6845,7 @@ function renderCourtroomArena(c) {
   const liveBadge = document.getElementById("crtLiveBadge");
 
   if (isAudienceMode) {
+    document.body.classList.add('audience-mode');
     if (filerLeft) filerLeft.style.display = "none";
     if (filerCenter) filerCenter.style.display = "none";
     if (voiceSpeed) voiceSpeed.style.display = "none";
@@ -6814,6 +6853,7 @@ function renderCourtroomArena(c) {
     if (audPill) audPill.style.display = "inline-block";
     if (liveBadge) liveBadge.style.display = "none";
   } else {
+    document.body.classList.remove('audience-mode');
     if (filerLeft) filerLeft.style.display = "flex";
     if (filerCenter) filerCenter.style.display = "block";
     if (voiceSpeed) voiceSpeed.style.display = "flex";
@@ -7030,7 +7070,7 @@ function updateCenterHearingDisplay(c, stage, spk) {
 
   // Check if trial is resolved
   if (c.status === 'resolved') {
-    if (resolvedActions) resolvedActions.style.display = "flex";
+    if (resolvedActions) resolvedActions.style.display = isAudienceMode ? "none" : "flex";
     document.getElementById("crtPhaseLabel").innerText = "TRIAL ADJUDICATED · FINAL JUDICIAL DECREE";
     document.getElementById("crtWitnessDetailsMini").innerText = "Case Adjudicated by Sessions Court Bench";
     document.getElementById("crtTurnBadge").innerText = "● TRIAL RESOLVED";
@@ -7048,15 +7088,21 @@ function updateCenterHearingDisplay(c, stage, spk) {
     questionEl.innerText = `"${vDecision}: ${vBasis}"`;
     
     answerBubble.style.display = "none";
-    actionBtn.innerText = "VIEW FULL JUDICIAL OPINION IN CASE ROOM →";
-    actionBtn.onclick = () => viewFullJudicialOpinion();
+    if (actionBtn) {
+      actionBtn.innerText = "VIEW FULL JUDICIAL OPINION IN CASE ROOM →";
+      actionBtn.onclick = () => viewFullJudicialOpinion();
+      actionBtn.style.display = isAudienceMode ? "none" : "block";
+    }
     crtActiveTurnText = questionEl.innerText;
     renderHearingHistoryFeed(c);
     return;
   }
 
   if (resolvedActions) resolvedActions.style.display = "none";
-  actionBtn.onclick = () => advanceProceduralStep();
+  if (actionBtn) {
+    actionBtn.onclick = () => advanceProceduralStep();
+    actionBtn.style.display = isAudienceMode ? "none" : "block";
+  }
 
   // Phase Label
   let phaseText = "PROSECUTION EXAMINATION";
