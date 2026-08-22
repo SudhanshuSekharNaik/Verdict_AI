@@ -1,4 +1,4 @@
-# VerdictAI — Nyay Manch (न्याय मंच)
+# VerdictAI 
 ### Autonomous AI Courtroom Arena & Indian Statutory Legal Reasoning Platform
 
 <p align="center">
@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://nyay-manch.onrender.com">🔴 Live Demo — nyay-manch.onrender.com</a></strong>
+  <strong><a href="https://nyay-manch.onrender.com">🔴 Live Demo — https://verdict-ai-hisy.onrender.com/</a></strong>
 </p>
 
 ---
