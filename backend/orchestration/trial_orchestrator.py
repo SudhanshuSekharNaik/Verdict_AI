@@ -250,8 +250,9 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
 
     # 2. PROSECUTION OPENING STATEMENT
     elif current_stage == "prosecution_opening":
-        raw_res = prosecution.generate_opening()
-        arg_text = raw_res.get("argument") or "The Prosecution submits that the evidence will establish the taking of corporate property with dishonest intention."
+        raw_res = prosecution.generate_opening(case_charge=case.charge_or_dispute)
+        arg_text = raw_res.get("argument") or f"May it please the Hon'ble Court, the Prosecution submits that the evidence and witness depositions will conclusively establish the elements of {case.charge_or_dispute}."
+        leg_basis = raw_res.get("legal_basis") or case.charge_or_dispute.split("—")[0].strip()
         new_arg_obj = Argument(
             case_id=case.id,
             round_number=1,
@@ -260,8 +261,8 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             content=arg_text,
             argument_type="opening_statement",
             argument_strength="strong",
-            legal_basis="BNS §303 — Theft",
-            party_statement_ref="Prosecution Opening",
+            legal_basis=leg_basis,
+            party_statement_ref="Prosecution Opening Address",
             evidence_references=raw_res.get("evidence_references", ["Fact #1", "Fact #2"]),
         )
         database.save_argument_record(new_arg_obj)
@@ -294,13 +295,14 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             new_argument=new_arg_obj,
             courtroom_event=evt,
             next_action_prompt="Defense Opening Statement",
-            audit_event="PROSECUTION_OPENING_RECORDED",
+            audit_event=f"PROSECUTION_OPENING_RECORDED_{prosecution.last_model_used}",
         )
 
     # 3. DEFENCE OPENING STATEMENT
     elif current_stage == "defence_opening":
-        raw_res = defense.generate_opening()
-        arg_text = raw_res.get("argument") or "The Defense submits that the State's circumstantial claims fail the standard of proof beyond reasonable doubt under BSA §104."
+        raw_res = defense.generate_opening(case_charge=case.charge_or_dispute)
+        arg_text = raw_res.get("argument") or "With utmost respect to this Hon'ble Court, the Defense submits that the State's circumstantial claims fail the standard of proof beyond reasonable doubt under BSA §104."
+        leg_basis = raw_res.get("legal_basis") or "Presumption of Innocence & BSA §104"
         new_arg_obj = Argument(
             case_id=case.id,
             round_number=1,
@@ -309,8 +311,8 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             content=arg_text,
             argument_type="opening_statement",
             argument_strength="strong",
-            legal_basis="Presumption of Innocence & BSA §104",
-            party_statement_ref="Defense Opening",
+            legal_basis=leg_basis,
+            party_statement_ref="Defense Opening Address",
             evidence_references=raw_res.get("evidence_references", ["Fact #3", "Fact #5"]),
         )
         database.save_argument_record(new_arg_obj)
@@ -859,8 +861,9 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
     # 5. PROSECUTION CLOSING STATEMENT
     elif current_stage == "closing_prosecution":
         debate_summary = compile_debate_history(arguments)
-        raw_res = prosecution.generate_closing(full_trial_summary=debate_summary)
-        arg_text = raw_res.get("argument") or "The State respectfully submits that the unbroken chain of circumstances satisfies BNS §303 beyond reasonable doubt."
+        raw_res = prosecution.generate_closing(full_trial_summary=debate_summary, case_charge=case.charge_or_dispute)
+        arg_text = raw_res.get("argument") or f"May it please the Court, the State respectfully submits that the unbroken chain of circumstantial and documentary proof satisfies {case.charge_or_dispute} beyond reasonable doubt."
+        leg_basis = raw_res.get("legal_basis") or f"{case.charge_or_dispute.split('—')[0].strip()} & BSA §104"
 
         new_arg_obj = Argument(
             case_id=case.id,
@@ -870,9 +873,9 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             content=arg_text,
             argument_type="closing_argument",
             argument_strength="strong",
-            legal_basis="BNS §303 & BSA §104",
-            party_statement_ref="Prosecution Statement",
-            evidence_references=raw_res.get("evidence_references", ["Fact #1", "Fact #2", "Fact #6"]),
+            legal_basis=leg_basis,
+            party_statement_ref="State Closing Summation",
+            evidence_references=raw_res.get("evidence_references", ["Fact #1", "Fact #2", "P-EX-01"]),
         )
         database.save_argument_record(new_arg_obj)
 
@@ -904,15 +907,16 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             new_argument=new_arg_obj,
             courtroom_event=evt,
             next_action_prompt="Defense Closing Arguments",
-            audit_event="PROSECUTION_CLOSING_RECORDED",
+            audit_event=f"PROSECUTION_CLOSING_RECORDED_{prosecution.last_model_used}",
         )
 
     # 6. DEFENCE CLOSING STATEMENT
     elif current_stage == "closing_defense":
         debate_summary = compile_debate_history(arguments)
         latest_pros = next((a.content for a in reversed(arguments) if a.speaker == Speaker.PROSECUTION), "")
-        raw_res = defense.generate_closing(full_trial_summary=debate_summary, latest_prosecution_arg=latest_pros)
-        arg_text = raw_res.get("argument") or "The defense submits that in the absence of forensic linkage and positive identification, reasonable doubt remains paramount."
+        raw_res = defense.generate_closing(full_trial_summary=debate_summary, latest_prosecution_arg=latest_pros, case_charge=case.charge_or_dispute)
+        arg_text = raw_res.get("argument") or "The defense respectfully submits that in the absence of conclusive forensic links and direct proof, reasonable doubt remains paramount under BSA §104."
+        leg_basis = raw_res.get("legal_basis") or "Presumption of Innocence & BSA §104"
 
         new_arg_obj = Argument(
             case_id=case.id,
@@ -922,9 +926,9 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             content=arg_text,
             argument_type="closing_argument",
             argument_strength="strong",
-            legal_basis="BNS §303 & BSA §104",
-            party_statement_ref="Defense Statement",
-            evidence_references=raw_res.get("evidence_references", ["Fact #5", "Fact #7"]),
+            legal_basis=leg_basis,
+            party_statement_ref="Defense Closing Summation",
+            evidence_references=raw_res.get("evidence_references", ["Fact #5", "Fact #7", "D-EX-01"]),
         )
         database.save_argument_record(new_arg_obj)
 

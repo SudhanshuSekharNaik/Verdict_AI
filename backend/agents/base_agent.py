@@ -7,8 +7,9 @@ from config import GROQ_API_KEY, GROQ_MODEL
 
 FALLBACK_MODELS = [
     "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b",
     "qwen/qwen3.6-27b",
+    "openai/gpt-oss-20b",
+    "groq/compound",
 ]
 
 
@@ -24,6 +25,8 @@ class BaseCourtroomAgent:
         self.model = model
         self.system_prompt = system_prompt
         self.history: List[Dict[str, str]] = [{"role": "system", "content": system_prompt}]
+        self.last_model_used: str = model
+        self.last_latency_ms: int = 0
 
     def say(
         self,
@@ -40,6 +43,7 @@ class BaseCourtroomAgent:
         for attempt in range(2):
             for model_candidate in models_to_try:
                 try:
+                    t0 = time.time()
                     kwargs: Dict[str, Any] = {
                         "model": model_candidate,
                         "messages": self.history,
@@ -49,6 +53,8 @@ class BaseCourtroomAgent:
                     if json_mode:
                         kwargs["response_format"] = {"type": "json_object"}
                     response = self.client.chat.completions.create(**kwargs)
+                    self.last_latency_ms = int((time.time() - t0) * 1000)
+                    self.last_model_used = model_candidate
                     reply = response.choices[0].message.content.strip()
                     # Strip thinking blocks from reasoning models
                     reply = re.sub(r"<think>.*?</think>", "", reply, flags=re.DOTALL).strip()
@@ -70,6 +76,7 @@ class BaseCourtroomAgent:
             "The matter stands submitted on the record. Arguments and canonical evidence "
             "have been evaluated under Bharatiya Nyaya Sanhita and Bharatiya Sakshya Adhiniyam standards."
         )
+        self.last_model_used = "groq-deterministic-fallback"
         self.history.append({"role": "assistant", "content": fallback_reply})
         return fallback_reply
 

@@ -4,7 +4,7 @@ from agents.base_agent import BaseCourtroomAgent
 
 class WitnessAgent(BaseCourtroomAgent):
     """
-    Simulates a witness on the stand in the courtroom simulation.
+    Simulates a sworn witness on the stand in the Indian courtroom simulation.
     Answers questions strictly from:
     1. Assigned witness role and connection to case
     2. Explicitly linked canonical facts and expected testimony
@@ -26,29 +26,29 @@ class WitnessAgent(BaseCourtroomAgent):
         linked_facts: List[str] = [],
         linked_exhibits: List[str] = [],
     ):
-        system_prompt = f"""You are WITNESS "{witness_name}" (ID: {witness_id}, Role: {role}) testifying under oath in the simulated matter "{case_title}".
+        system_prompt = f"""You are SWORN WITNESS "{witness_name}" (ID: {witness_id}, Role: {role}) testifying under solemn affirmation in the judicial proceeding "{case_title}".
 
-YOUR IDENTITY & SCOPE OF KNOWLEDGE:
-- Role: {role}
+WITNESS PROFILE & SCOPE OF KNOWLEDGE:
+- Formal Role: {role}
 - Connection to Case: {connection_to_case}
-- What you personally witnessed / know: {expected_testimony}
+- Personal Observations & Sworn Scope: {expected_testimony}
 - Linked Canonical Facts: {', '.join(linked_facts) if linked_facts else 'General case background'}
-- Linked Exhibits / Documents: {', '.join(linked_exhibits) if linked_exhibits else 'None'}
+- Admitted Exhibits / Documents: {', '.join(linked_exhibits) if linked_exhibits else 'None'}
 
-CANONICAL CASE RECORD:
+CANONICAL CASE DOSSIER:
 {canonical_facts}
 
-STRICT TESTIMONY RULES:
-1. TESTIFY ONLY FROM YOUR PERSONAL KNOWLEDGE: Speak in the first person ("I saw...", "I accessed...", "According to the logs...").
-2. NEVER INVENT: Do not invent phone calls, confessions, CCTV, forensic reports, or conversations not in your knowledge record.
-3. ADMIT GAPS HONESTLY: If opposing counsel asks you something you cannot verify, say: "I do not have personal knowledge of that." or "The records available to me do not show that."
-4. KEEP ANSWERS NATURAL & CONCISE: 1-3 sentences per question.
+SWORN TESTIMONY & PROFESSIONALISM RULES:
+1. TESTIFY STRICTLY IN CHARACTER: Speak in the first person with dignified, natural, and realistic composure appropriate for your role (e.g. an observant co-passenger, an official investigating officer referring to case diaries, a technical expert citing forensic data, or a family member).
+2. HIGH-QUALITY SUBSTANTIVE ANSWERS: Provide 2 to 3 articulate, meaningful sentences directly answering the counsel's query with specific factual details from your personal knowledge scope.
+3. NEVER INVENT FICTIONAL EVENTS: Do not invent unverified confessions, secret documents, or conversations absent from the case dossier.
+4. ACKNOWLEDGE BOUNDARIES DIGNIFIEDLY: When asked during cross-examination about facts beyond your eyesight or documentation, respond with honest clarity: "I cannot confirm what occurred outside my direct observation" or "Our station records do not reflect that circumstance."
 
 Return ONLY a valid JSON object:
 {{
   "witness_id": "{witness_id}",
   "witness_name": "{witness_name}",
-  "answer": "<your concise testimony answer>",
+  "answer": "<your 2-3 sentence articulate, meaningful, and character-authentic testimony>",
   "facts_referenced": ["Fact #N", ...],
   "exhibits_referenced": ["P-EX-01", ...],
   "admits_lack_of_knowledge": <true|false>
@@ -62,13 +62,15 @@ Return ONLY a valid JSON object:
         question: str,
         prior_testimony_summary: str = "",
     ) -> Dict[str, Any]:
-        prompt = f"""=== WITNESS STAND: {examination_type.replace('_', ' ').upper()} ===
-Examining Counsel: {examining_counsel.upper()}
-Question asked to you:
+        counsel_title = "Public Prosecutor / Filing Counsel" if examining_counsel.lower() == "prosecution" else "Defense Counsel"
+        stage_title = "EXAMINATION-IN-CHIEF" if "chief" in examination_type.lower() else "CROSS-EXAMINATION"
+        prompt = f"""=== WITNESS STAND: {stage_title} ===
+Examining Advocate: {counsel_title}
+Question put to you under oath:
 \"{question}\"
 
 Prior testimony in this session:
 {prior_testimony_summary if prior_testimony_summary else "Beginning of examination."}
 
-Answer the question truthfully and strictly within your personal knowledge boundaries as the specified JSON object."""
+Provide your sworn, authentic, and substantive answer as the specified JSON object."""
         return self.say_json(prompt, max_tokens=600, temperature=0.25)

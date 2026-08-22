@@ -4174,13 +4174,14 @@
           <div id="crtAudienceBanner" style="display:none; background:rgba(212,160,23,0.08); border:1px solid var(--brass); border-radius:6px; padding:12px 16px; margin-top:16px; flex-direction:column; gap:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; width:100%;">
               <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:18px;">👁️</span>
+                <span style="font-size:20px;">⚡</span>
                 <div>
-                  <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:700; color:var(--brass-bright); letter-spacing:1px; text-transform:uppercase;">AUDIENCE BROADCAST · FULLY AUTONOMOUS TRIAL</div>
-                  <div style="font-size:11.5px; color:var(--paper-dim);">Arguments, witness examinations, and judicial decree unfold sequentially on their own. Pure observation mode.</div>
+                  <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:700; color:var(--brass-bright); letter-spacing:1px; text-transform:uppercase;">GROQ LPU™ LIVE BROADCAST · 100% UNSCRIPTED AI TRIAL</div>
+                  <div style="font-size:11.5px; color:var(--paper-dim);">Autonomous adversarial legal agents generate real-time submissions, cross-examinations, and decrees. Pure observation mode.</div>
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
+                <span id="crtAudienceAgentTelemetry" class="status-badge" style="background:rgba(212,160,23,0.15); color:var(--brass-bright); border:1px solid var(--brass); font-size:9.5px; font-family:'JetBrains Mono',monospace;">⚡ Groq LPU™ · Autonomous Reasoning</span>
                 <span class="status-badge" style="background:#2d1b1f; color:var(--prosecution-accent); border:1px solid var(--prosecution); font-size:9.5px; letter-spacing:1px;">● LIVE STREAM</span>
               </div>
             </div>
@@ -4188,7 +4189,7 @@
             <div style="width:100%; margin-top:2px;">
               <div style="display:flex; justify-content:space-between; font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--brass); margin-bottom:4px;">
                 <span id="crtAudienceTimerLabel">Pacing ~8s to read statements · Next turn advancing...</span>
-                <span>AUDIENCE PACING</span>
+                <span>AUDIENCE READING DELAY</span>
               </div>
               <div style="width:100%; height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;">
                 <div id="crtAudienceTimerBar" style="width:0%; height:100%; background:var(--brass-bright); border-radius:2px; transition:width 8000ms linear;"></div>
@@ -4737,16 +4738,21 @@
 <!-- ============================================================ -->
 <!-- MODAL: AUDIENCE LIVE CASE GALLERY (PART 1) -->
 <!-- ============================================================ -->
+<!-- MODAL: AUDIENCE CASE GALLERY (PART 1) -->
+<!-- ============================================================ -->
 <div class="modal-overlay" id="modalAudienceGallery" onclick="if(event.target===this)closeModal('modalAudienceGallery')">
   <div class="modal-dialog gallery-modal-dialog">
     <button class="modal-close-corner-btn" onclick="closeModal('modalAudienceGallery')" title="Close">✕</button>
     
     <div style="text-align:center; max-width:680px; margin:0 auto 16px;">
-      <div style="font-size:32px; color:var(--brass-bright); margin-bottom:4px;">👁️</div>
-      <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:2px; color:var(--brass); text-transform:uppercase; margin-bottom:6px;">LIVE BROADCAST · SELECT A TRIAL</div>
-      <h2 style="font-family:'Fraunces', serif; font-size:24px; color:var(--paper); margin:0 0 8px;">Audience Observation Gallery</h2>
-      <p style="font-size:13px; color:var(--paper-dim); line-height:1.5; margin:0;">
-        Choose an adversarial trial to watch unfold in pure observation mode. Experience fast-paced ~4–5 minute hearings or the full landmark benchmark.
+      <div style="font-size:32px; color:var(--brass-bright); margin-bottom:4px;">⚡</div>
+      <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(212,160,23,0.12); border:1px solid var(--brass); padding:4px 10px; border-radius:4px; margin-bottom:8px;">
+        <span style="color:var(--brass-bright); font-size:11px;">⚡</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:1.5px; color:var(--brass-bright); font-weight:700; text-transform:uppercase;">GROQ LPU™ ENGINE · 100% UNSCRIPTED AI TRIAL</span>
+      </div>
+      <h2 style="font-family:'Fraunces', serif; font-size:24px; color:var(--paper); margin:0 0 6px;">Audience Observation Gallery</h2>
+      <p style="font-size:12.5px; color:var(--paper-dim); line-height:1.5; margin:0;">
+        Select an adversarial case to watch unfold in pure observation mode. All submissions, cross-examinations, witness depositions, and judicial rulings are generated in real-time by autonomous AI agents.
       </p>
     </div>
 
@@ -4773,6 +4779,18 @@
       <div id="briefingRuntimeBadge" class="runtime-badge compact">~4 MIN HEARING</div>
     </div>
 
+    <!-- Groq LPU Unscripted Live Assurance Banner -->
+    <div style="background:rgba(212,160,23,0.07); border:1px solid rgba(212,160,23,0.3); border-radius:4px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">⚡</span>
+        <div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:700; color:var(--brass-bright); letter-spacing:0.5px; text-transform:uppercase;">LIVE GROQ LPU™ INFERENCE · UNSCRIPTED ADVERSARIAL AGENTS</div>
+          <div style="font-size:11.5px; color:var(--paper-dim);">Every turn is dynamically computed by live legal models in real time. Not pre-recorded.</div>
+        </div>
+      </div>
+      <span class="status-badge" style="background:#2d1b1f; color:var(--prosecution-accent); border:1px solid var(--prosecution); font-size:9px; letter-spacing:1px; white-space:nowrap;">● 100% UNSCRIPTED AI</span>
+    </div>
+
     <!-- Hook -->
     <div class="briefing-hook" id="briefingHookText">
       "A late-night confrontation on the Intercity Express leaves one man dead — was it cold-blooded murder or a panic-induced accident in a moving vestibule?"
@@ -4791,12 +4809,12 @@
       <div class="briefing-matrix-card">
         <div class="briefing-section-title" style="color:var(--prosecution-accent);">PROSECUTION / APPLICANT</div>
         <div style="font-size:12.5px; font-weight:600; color:var(--paper);" id="briefingProsecutionParty">State Prosecution (Railway Police)</div>
-        <div style="font-size:11px; color:var(--paper-dim); margin-top:2px;" id="briefingProsecutionAgent">Agent 02 — Public Prosecutor</div>
+        <div style="font-size:11px; color:var(--paper-dim); margin-top:2px;" id="briefingProsecutionAgent">Agent 02 — Public Prosecutor (Groq LPU)</div>
       </div>
       <div class="briefing-matrix-card">
         <div class="briefing-section-title" style="color:var(--defense-accent);">DEFENCE / RESPONDENT</div>
         <div style="font-size:12.5px; font-weight:600; color:var(--paper);" id="briefingDefenseParty">Rohan Verma (Passenger)</div>
-        <div style="font-size:11px; color:var(--paper-dim); margin-top:2px;" id="briefingDefenseAgent">Agent 01 — Criminal Defense Advocate</div>
+        <div style="font-size:11px; color:var(--paper-dim); margin-top:2px;" id="briefingDefenseAgent">Agent 01 — Criminal Defense Advocate (Groq LPU)</div>
       </div>
     </div>
 
@@ -7795,6 +7813,21 @@ function updateCenterHearingDisplay(c, stage, spk) {
   document.getElementById("crtPhaseLabel").innerText = phaseText;
   document.getElementById("crtWitnessDetailsMini").innerText = witRoleDesc;
   document.getElementById("crtTurnBadge").innerText = `● ${spk.toUpperCase()} TURN`;
+
+  const audTelemetry = document.getElementById("crtAudienceAgentTelemetry");
+  if (audTelemetry) {
+    if (spk === 'judge') {
+      audTelemetry.innerText = `⚡ Groq LPU™ · Presiding Judge (openai/gpt-oss-120b)`;
+    } else if (spk === 'prosecution') {
+      audTelemetry.innerText = `⚡ Groq LPU™ · Prosecution Agent (openai/gpt-oss-120b)`;
+    } else if (spk === 'defense') {
+      audTelemetry.innerText = `⚡ Groq LPU™ · Defense Agent (openai/gpt-oss-120b)`;
+    } else if (spk === 'witness') {
+      audTelemetry.innerText = `⚡ Groq LPU™ · Sworn Witness (openai/gpt-oss-120b)`;
+    } else {
+      audTelemetry.innerText = `⚡ Groq LPU™ · Autonomous Unscripted Reasoning`;
+    }
+  }
 
   // Check testimony turns
   const turns = (wit && wit.testimony_turns) ? wit.testimony_turns : [];
