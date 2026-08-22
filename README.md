@@ -1,5 +1,5 @@
-# Nyay Manch (न्याय मंच)
-### AI Courtroom Arena & Indian Statutory Legal Reasoning Platform
+# VerdictAI — Nyay Manch (न्याय मंच)
+### Autonomous AI Courtroom Arena & Indian Statutory Legal Reasoning Platform
 
 <p align="center">
   <em>An autonomous, multi-agent adversarial courtroom simulator grounded in Indian law.</em>
@@ -24,14 +24,13 @@
 
 ---
 
-> ⚖️ **Educational & Research Simulation.** Nyay Manch does not provide legal advice
+> ⚖️ **Educational & Research Simulation.** VerdictAI (Nyay Manch) does not provide legal advice
 > and does not represent actual judicial proceedings or binding judgments. See
 > [Disclaimer](#-disclaimer).
 
 ## Table of Contents
 
-- [What is Nyay Manch?](#-what-is-nyay-manch)
-- [Highlights](#-highlights)
+- [What is VerdictAI (Nyay Manch)?](#-what-is-verdictai-nyay-manch)
 - [Key Features](#-key-features)
 - [Architecture](#-architecture)
 - [Tech Stack](#-tech-stack)
@@ -47,9 +46,9 @@
 
 ---
 
-## 🏛️ What is Nyay Manch?
+## 🏛️ What is VerdictAI (Nyay Manch)?
 
-Nyay Manch is a turn-based, multi-agent courtroom simulator built to explore how
+VerdictAI (Nyay Manch) is a turn-based, multi-agent courtroom simulator built to explore how
 LLM agents reason through adversarial legal argument. Rather than a single model
 producing a plausible-sounding answer, a full case is contested — a Prosecution
 agent and a Defence agent build independent theories from a shared, canonical

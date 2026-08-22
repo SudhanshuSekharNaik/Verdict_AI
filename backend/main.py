@@ -11,7 +11,7 @@ from routers import cases, law
 from services.database import init_db
 
 app = FastAPI(
-    title="Nyay Manch / Courtroom Arena API",
+    title="VerdictAI — Nyay Manch / Courtroom Arena API",
     description="Turn-based multi-agent legal courtroom simulator and Indian Law reasoning platform — "
     "prosecution & defense agents argue sequentially turn-by-turn with strict fact-grounding, "
     "Indian Law statutory intelligence (BNS/BNSS/BSA), RAG knowledge grounding, "

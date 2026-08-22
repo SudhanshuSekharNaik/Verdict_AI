@@ -23,10 +23,10 @@ def test_landing_page_cta_hierarchy_and_choice_modal(page: Page, frontend_url: s
     expect(hero_gold_btn).to_be_visible()
     expect(hero_gold_btn).to_contain_text("ENTER COURT")
 
-    # 2nd Gold Button: Section 15 Closing CTA [ ENTER NYAY MANCH ]
+    # 2nd Gold Button: Section 15 Closing CTA [ ENTER VERDICTAI ]
     cta_gold_btn = page.locator("#secCTA .btn-editorial-gold")
     expect(cta_gold_btn).to_be_visible()
-    expect(cta_gold_btn).to_contain_text("ENTER NYAY MANCH")
+    expect(cta_gold_btn).to_contain_text("ENTER VERDICTAI")
 
     # 2. Verify all other secondary buttons in #viewLanding use ghost/secondary styling
     ghost_buttons = page.locator("#viewLanding .btn-editorial-ghost")

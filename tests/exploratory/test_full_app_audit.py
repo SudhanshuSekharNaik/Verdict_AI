@@ -38,7 +38,7 @@ def test_full_application_audit():
         print("✓ Frontend page loaded successfully")
 
         # Test Landing Page Hero and Key Sections
-        expect(page.locator("h1:has-text('NYAY MANCH')").first).to_be_visible()
+        expect(page.locator("h1:has-text('VERDICTAI')").first).to_be_visible()
         print("✓ Landing Page H1 Title rendered")
 
         # Test Navigation to Dashboard
