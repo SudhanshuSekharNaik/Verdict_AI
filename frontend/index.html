@@ -71,39 +71,100 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 32px;
-    background: rgba(11, 15, 23, 0.94);
+    padding: 10px 24px;
+    background: rgba(11, 15, 23, 0.95);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--line-light);
     position: sticky;
     top: 0;
     z-index: 100;
     transition: all 0.25s ease;
+    gap: 14px;
+    min-height: 62px;
+    box-sizing: border-box;
   }
   header.scrolled {
-    padding: 8px 32px;
+    padding: 8px 24px;
     background: rgba(7, 9, 14, 0.98);
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
-  .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-  .brand-emblem { font-size: 22px; color: var(--brass-bright); display: flex; align-items: center; line-height: 1; }
-  .brand-row { display: flex; align-items: baseline; gap: 10px; }
-  .brand-title { margin: 0; font-family: 'Cinzel', serif; font-weight: 800; font-size: 19px; letter-spacing: 2px; color: var(--paper); }
-  .brand-devanagari { font-family: 'Noto Serif Devanagari', serif; font-size: 14px; font-weight: 600; color: var(--paper-dim); opacity: 0.85; }
-  .brand .sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--paper-faint); }
-  .nav-links { display: flex; align-items: center; gap: 6px; }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .brand-emblem {
+    font-size: 20px;
+    color: var(--brass-bright);
+    display: flex;
+    align-items: center;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .brand-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .brand-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: 1.5px;
+    color: var(--paper);
+    white-space: nowrap;
+    line-height: 1.1;
+  }
+  .brand-devanagari {
+    font-family: 'Noto Serif Devanagari', serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--paper-dim);
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+  .brand-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--paper-faint);
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
   .nav-btn {
     background: transparent;
     border: 1px solid transparent;
     color: var(--paper-dim);
-    padding: 6px 12px;
+    padding: 5px 8px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.5px;
+    font-size: 10.5px;
+    letter-spacing: 0.3px;
     text-transform: uppercase;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1.2;
   }
   .nav-btn:hover, .nav-btn.active {
     background: var(--ink-surface);
@@ -115,15 +176,17 @@
     color: #07090e;
     border: 1px solid var(--brass-bright);
     font-weight: 700;
-    letter-spacing: 0.8px;
-    padding: 6px 14px;
-    box-shadow: 0 0 12px rgba(197, 155, 79, 0.28);
+    letter-spacing: 0.5px;
+    padding: 5px 11px;
+    box-shadow: 0 0 10px rgba(197, 155, 79, 0.25);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .nav-btn.file-case-cta:hover, .nav-btn.file-case-cta.active {
     background: var(--brass-bright);
     color: #000;
     border-color: #fff;
-    box-shadow: 0 0 18px rgba(197, 155, 79, 0.5);
+    box-shadow: 0 0 16px rgba(197, 155, 79, 0.45);
     transform: translateY(-1px);
   }
   .nav-btn.ghost-court {
@@ -131,8 +194,10 @@
     color: var(--paper);
     border: 1px solid rgba(255, 255, 255, 0.24);
     font-weight: 600;
-    letter-spacing: 1px;
-    padding: 6px 14px;
+    letter-spacing: 0.5px;
+    padding: 5px 9px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .nav-btn.ghost-court:hover {
     background: rgba(255, 255, 255, 0.08);
@@ -145,8 +210,8 @@
     .mobile-text { display: inline; }
     .desktop-text { display: none; }
     .nav-btn.file-case-cta {
-      padding: 6px 10px;
-      font-size: 11px;
+      padding: 5px 8px;
+      font-size: 10px;
     }
   }
 
