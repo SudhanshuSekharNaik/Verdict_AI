@@ -6,11 +6,20 @@
 </p>
 
 <p align="center">
+  <a href="https://nyay-manch.onrender.com"><img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-nyay--manch.onrender.com-success?style=for-the-badge" /></a>
+</p>
+
+<p align="center">
   <img alt="Tests" src="https://img.shields.io/badge/Playwright%20E2E-13%20Passing-brightgreen" />
   <img alt="Backend" src="https://img.shields.io/badge/FastAPI-2.5.0-blue" />
   <img alt="LLM" src="https://img.shields.io/badge/Groq-Multi--Model%20Fallback-orange" />
   <img alt="Jurisprudence" src="https://img.shields.io/badge/Statutes-BNS%20%7C%20BNSS%20%7C%20BSA%202023-gold" />
+  <img alt="Deployed" src="https://img.shields.io/badge/Deployed-Render-46E3B7" />
   <img alt="License" src="https://img.shields.io/badge/License-MIT-lightgrey" />
+</p>
+
+<p align="center">
+  <strong><a href="https://nyay-manch.onrender.com">🔴 Live Demo — nyay-manch.onrender.com</a></strong>
 </p>
 
 ---
@@ -22,6 +31,7 @@
 ## Table of Contents
 
 - [What is Nyay Manch?](#-what-is-nyay-manch)
+- [Highlights](#-highlights)
 - [Key Features](#-key-features)
 - [Architecture](#-architecture)
 - [Tech Stack](#-tech-stack)
@@ -51,6 +61,27 @@ the **Bharatiya Nyaya Sanhita (BNS)**, **Bharatiya Sakshya Adhiniyam (BSA)**, an
 **Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023** — alongside a wider library of
 practice areas (family, civil, corporate, cyber, IP, tax, constitutional,
 employment, environmental, human rights, and banking law).
+
+## 🎯 Highlights
+
+*For anyone skimming before a deeper read:*
+
+- **Multi-agent adversarial architecture** — not a single LLM call, but
+  independent Prosecution, Defence, Judge, and Witness agents reasoning from a
+  shared, canonically-constrained fact record.
+- **RAG-grounded domain expertise** — 14 specialist counsel agents, each
+  retrieving from its own per-domain vector index (real statutes, landmark case
+  doctrine) rather than reasoning from general pretraining alone.
+- **Validated against real jurisprudence** — benchmarked against a landmark,
+  publicly-decided Indian Supreme Court case (K.M. Nanavati v. State of
+  Maharashtra, 1959); the simulation independently reached the same verdict the
+  real courts did. See [Benchmarking](#-benchmarking-against-real-case-law).
+- **Production-deployed**, not just a local demo — live on Render with a
+  memory-optimized inference pipeline (see [Deployment](#-production-deployment)
+  for the specific RAM-cost tradeoff that shaped this).
+- **Tested**, not just built — a Playwright E2E regression suite plus an
+  agentic exploratory-testing layer for catching UX friction scripted
+  assertions miss.
 
 ## ✨ Key Features
 
@@ -134,6 +165,7 @@ general-purpose legal knowledge.
 | Agent Knowledge | RAG — local vector store (FAISS/ChromaDB) per legal domain |
 | Frontend | HTML / CSS / JS (single-file, no build step) |
 | Testing | Playwright (E2E), agentic exploratory testing |
+| Deployment | Render (Python 3 web service) |
 | Statutes Modeled | BNS, BNSS, BSA (2023), IT Act 2000, Constitution of India, and 10+ other Indian acts by practice area |
 
 ## 🚀 Quick Start (Local Setup)
@@ -141,8 +173,8 @@ general-purpose legal knowledge.
 ### 1. Clone & Configure Environment
 
 ```bash
-git clone https://github.com/your-username/nyay-manch.git
-cd nyay-manch/backend
+git clone https://github.com/SudhanshuSekharNaik/Nyay_Manch.git
+cd Nyay_Manch/backend
 
 # Create & activate a virtual environment
 python -m venv venv
@@ -179,7 +211,7 @@ the repository root.)*
 ## 📁 Project Structure
 
 ```
-nyay-manch/
+Nyay_Manch/
 ├── backend/
 │   ├── main.py                      FastAPI app entrypoint
 │   ├── config.py                    Env var loading, model fallback config
@@ -217,6 +249,20 @@ python tests/exploratory/agentic_checks.py
 
 ## 🌐 Production Deployment
 
+**Live at [nyay-manch.onrender.com](https://nyay-manch.onrender.com)**, deployed
+as a Render Python 3 web service.
+
+### Deployment notes
+
+A real engineering tradeoff worth documenting: the initial argument-classifier
+implementation used a local HuggingFace zero-shot model
+(`facebook/bart-large-mnli`), which alone consumes ~1.6GB of RAM — enough to
+force a $25-85/month Render instance just to hold model weights in memory. This
+was refactored to a lightweight Groq prompt-based classification call instead,
+reusing the same LLM already powering the courtroom agents. This cut the
+memory footprint enough to run comfortably on Render's Starter tier, with no
+loss of classification quality.
+
 ### Option 1 — Docker
 
 ```dockerfile
@@ -231,8 +277,9 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ### Option 2 — Render / Railway / Heroku
 
-- **Build Command:** `pip install -r backend/requirements.txt`
-- **Start Command:** `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+- **Root Directory:** `backend`
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
 - **Environment Variables:** set `GROQ_API_KEY` in your platform's dashboard.
 
 ## ⚖️ Benchmarking Against Real Case Law
