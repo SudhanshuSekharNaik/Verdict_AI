@@ -256,7 +256,7 @@ class BaseCourtroomAgent:
         if not result.get("winner"):
             result["winner"] = "defense_prevailed"
         if not result.get("decision"):
-            result["decision"] = "NOT GUILTY — Prosecution has not established guilt beyond reasonable doubt."
+            result["decision"] = "NOT GUILTY"
         if not result.get("decision_basis"):
             result["decision_basis"] = "Evidence evaluated under BSA standards and required burden of proof."
         if not result.get("reasoning_summary"):

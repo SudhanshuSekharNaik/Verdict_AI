@@ -2315,6 +2315,153 @@
   body.audience-mode #crtLiveBadge {
     display: none !important;
   }
+
+  /* Live Case Gallery & Briefing Screen */
+  .gallery-modal-dialog {
+    max-width: 1040px;
+    width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--ink-panel);
+    border: 1px solid var(--brass);
+    border-radius: 8px;
+    padding: 28px;
+  }
+  .gallery-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .gallery-case-card {
+    background: var(--ink-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+  .gallery-case-card:hover {
+    border-color: var(--brass-bright);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 16px rgba(197, 155, 79, 0.15);
+  }
+  .gallery-case-hook {
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--paper-dim);
+    margin: 10px 0 16px;
+  }
+  .runtime-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .runtime-badge.compact {
+    background: rgba(197, 155, 79, 0.12);
+    border: 1px solid var(--brass);
+    color: var(--brass-bright);
+  }
+  .runtime-badge.landmark {
+    background: rgba(184, 58, 75, 0.15);
+    border: 1px solid var(--prosecution);
+    color: var(--prosecution-accent);
+  }
+  
+  /* Briefing Dossier Modal */
+  .briefing-modal-dialog {
+    max-width: 760px;
+    width: 92vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--ink-panel);
+    border: 1px solid var(--brass);
+    border-radius: 8px;
+    padding: 32px;
+  }
+  .briefing-hook {
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--brass-bright);
+    padding: 12px 16px;
+    background: rgba(197, 155, 79, 0.08);
+    border-left: 3px solid var(--brass);
+    border-radius: 0 4px 4px 0;
+    margin: 16px 0 20px;
+  }
+  .briefing-section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--brass);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .briefing-matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 600px) {
+    .briefing-matrix-grid { grid-template-columns: 1fr; }
+  }
+  .briefing-matrix-card {
+    background: var(--ink-surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 12px 14px;
+  }
+
+  /* Courtroom Countdown Overlay */
+  .crt-countdown-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 600;
+    background: rgba(7, 9, 14, 0.94);
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+    transition: opacity 0.4s ease-out;
+  }
+  .crt-countdown-num {
+    font-family: 'Fraunces', serif;
+    font-size: 96px;
+    font-weight: 800;
+    color: var(--brass-bright);
+    line-height: 1;
+    margin: 14px 0;
+    text-shadow: 0 0 30px rgba(229, 190, 112, 0.4);
+    animation: countScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes countScaleIn {
+    0% { transform: scale(0.6); opacity: 0; }
+    40% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .crt-countdown-num { animation: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -3862,11 +4009,20 @@
   <!-- ============================================================ -->
   <!-- 4. LIVE COURTROOM HEARING INTERFACE (3-ZONE MINIMAL TEXT) -->
   <!-- ============================================================ -->
-  <section id="viewCourtroom" style="display:none;">
+  <section id="viewCourtroom" style="display:none; position:relative; min-height:600px;">
+    <!-- Audience Countdown Overlay -->
+    <div id="crtCountdownOverlay" class="crt-countdown-overlay">
+      <div style="font-size:40px; color:var(--brass-bright); margin-bottom:8px;">⚖</div>
+      <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:2.5px; color:var(--brass); text-transform:uppercase; margin-bottom:6px;">SESSIONS COURT OF INDIA</div>
+      <div style="font-family:'Fraunces', serif; font-size:20px; color:var(--paper); margin-bottom:8px;" id="crtCountdownSubtitle">All Rise · The Court is Coming to Order</div>
+      <div id="crtCountdownNumber" class="crt-countdown-num">3</div>
+      <div style="font-size:13px; color:var(--paper-dim); letter-spacing:0.5px; font-family:'Fraunces', serif;" id="crtCountdownCaseTitle">State of Maharashtra v. Rohan Verma</div>
+    </div>
+
     <!-- Compact Top Courtroom Header -->
     <div class="crt-top-header">
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <span style="font-family:'Fraunces', serif; font-size:16px; font-weight:700; color:var(--brass-bright);">⚖ AADALAT AI</span>
+        <span style="font-family:'Fraunces', serif; font-size:16px; font-weight:700; color:var(--brass-bright);">⚖ VERDICTAI</span>
         <span style="color:var(--line-light);">|</span>
         <span style="font-family:'Fraunces', serif; font-size:15px; font-weight:600;" id="crtCaseTitle">State of Maharashtra v. Rohan Verma</span>
         <span class="status-badge" style="background:#3d1a20; color:var(--prosecution-accent); border:1px solid var(--prosecution); font-size:9.5px;" id="crtLiveBadge">● LIVE HEARING</span>
@@ -4562,6 +4718,95 @@
           [ FILE A NEW CASE → ]
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: AUDIENCE LIVE CASE GALLERY (PART 1) -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="modalAudienceGallery" onclick="if(event.target===this)closeModal('modalAudienceGallery')">
+  <div class="modal-dialog gallery-modal-dialog">
+    <button class="modal-close-corner-btn" onclick="closeModal('modalAudienceGallery')" title="Close">✕</button>
+    
+    <div style="text-align:center; max-width:680px; margin:0 auto 16px;">
+      <div style="font-size:32px; color:var(--brass-bright); margin-bottom:4px;">👁️</div>
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:2px; color:var(--brass); text-transform:uppercase; margin-bottom:6px;">LIVE BROADCAST · SELECT A TRIAL</div>
+      <h2 style="font-family:'Fraunces', serif; font-size:24px; color:var(--paper); margin:0 0 8px;">Audience Observation Gallery</h2>
+      <p style="font-size:13px; color:var(--paper-dim); line-height:1.5; margin:0;">
+        Choose an adversarial trial to watch unfold in pure observation mode. Experience fast-paced ~4–5 minute hearings or the full landmark benchmark.
+      </p>
+    </div>
+
+    <!-- Gallery Cards Grid -->
+    <div class="gallery-cards-grid" id="audienceGalleryCardsContainer">
+      <!-- Injected dynamically via renderAudienceGallery() -->
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: CASE BRIEFING / PRE-SHOW DOSSIER (PART 2) -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="modalCaseBriefing" onclick="if(event.target===this)closeModal('modalCaseBriefing')">
+  <div class="modal-dialog briefing-modal-dialog">
+    <button class="modal-close-corner-btn" onclick="closeModal('modalCaseBriefing')" title="Close">✕</button>
+    
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+      <div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:2px; color:var(--brass); text-transform:uppercase;" id="briefingCategoryBadge">CRIMINAL LAW · BNS §103</div>
+        <h2 style="font-family:'Fraunces', serif; font-size:22px; color:var(--paper); margin:4px 0 0;" id="briefingCaseTitle">State of Maharashtra v. Rohan Verma</h2>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--paper-dim); margin-top:2px;" id="briefingDocketNum">DOCKET: CR-2026-088</div>
+      </div>
+      <div id="briefingRuntimeBadge" class="runtime-badge compact">~4 MIN HEARING</div>
+    </div>
+
+    <!-- Hook -->
+    <div class="briefing-hook" id="briefingHookText">
+      "A late-night confrontation on the Intercity Express leaves one man dead — was it cold-blooded murder or a panic-induced accident in a moving vestibule?"
+    </div>
+
+    <!-- What Happened -->
+    <div style="margin-bottom:16px;">
+      <div class="briefing-section-title">WHAT HAPPENED (CORE FACT PATTERN)</div>
+      <p style="font-size:13px; color:var(--paper); line-height:1.6; margin:0;" id="briefingWhatHappenedText">
+        <!-- Narrative summary -->
+      </p>
+    </div>
+
+    <!-- Who's Who Grid -->
+    <div class="briefing-matrix-grid">
+      <div class="briefing-matrix-card">
+        <div class="briefing-section-title" style="color:var(--prosecution-accent);">PROSECUTION / APPLICANT</div>
+        <div style="font-size:12.5px; font-weight:600; color:var(--paper);" id="briefingProsecutionParty">State Prosecution (Railway Police)</div>
+        <div style="font-size:11px; color:var(--paper-dim); margin-top:2px;" id="briefingProsecutionAgent">Agent 02 — Public Prosecutor</div>
+      </div>
+      <div class="briefing-matrix-card">
+        <div class="briefing-section-title" style="color:var(--defense-accent);">DEFENCE / RESPONDENT</div>
+        <div style="font-size:12.5px; font-weight:600; color:var(--paper);" id="briefingDefenseParty">Rohan Verma (Passenger)</div>
+        <div style="font-size:11px; color:var(--paper-dim); margin-top:2px;" id="briefingDefenseAgent">Agent 01 — Criminal Defense Advocate</div>
+      </div>
+    </div>
+
+    <!-- Statutory Charge & Gloss -->
+    <div style="background:var(--ink-surface); border:1px solid var(--line); border-radius:4px; padding:12px 14px; margin-bottom:16px;">
+      <div class="briefing-section-title">STATUTORY CHARGE &amp; PLAIN GLOSS</div>
+      <div style="font-size:12.5px; font-weight:600; color:var(--brass-bright);" id="briefingStatuteText">BNS §103 (Murder) vs. BNS §105 (Culpable Homicide)</div>
+      <div style="font-size:12px; color:var(--paper-dim); margin-top:3px;" id="briefingStatuteGlossText">Intentional causing of death vs. Act done with knowledge without intent to cause death.</div>
+    </div>
+
+    <!-- What to Expect -->
+    <div style="background:rgba(212,160,23,0.06); border:1px solid rgba(212,160,23,0.25); border-radius:4px; padding:10px 14px; margin-bottom:20px;">
+      <div class="briefing-section-title" style="color:var(--brass-bright);">WHAT TO EXPECT (AUTONOMOUS ARC)</div>
+      <div style="font-size:12px; color:var(--paper); line-height:1.5;" id="briefingWhatToExpectText">
+        This simulation will autonomously present Opening Statements → Evidentiary Exhibits → Witness Deposition &amp; Cross-Examination → Closing Arguments → Presiding Judicial Verdict in approximately 4 minutes.
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <button class="btn-secondary" style="padding:10px 16px; font-size:12px;" onclick="backToAudienceGallery()">← Back to Case Gallery</button>
+      <button id="btnBriefingEnterCourt" class="btn-gold" style="padding:11px 24px; font-size:13px; font-weight:700;" onclick="startAudienceTrialFromBriefing()">[ ENTER COURTROOM → ]</button>
     </div>
   </div>
 </div>
@@ -5267,6 +5512,310 @@ async function loadBenchmarkDemo(isAudience = false) {
   }
 }
 
+const AUDIENCE_GALLERY_CASES = {
+  railway_homicide: {
+    id: "aud_railway_homicide",
+    docket: "CR-2026-088",
+    title: "State of Maharashtra v. Rohan Verma",
+    category: "Criminal Law · BNS §103",
+    badge: "~4 min hearing",
+    badgeType: "compact",
+    hook: "A late-night confrontation on the Intercity Express leaves one man dead — was it cold-blooded murder or a panic-induced accident in a moving vestibule?",
+    whatHappened: "On the night of 18 August, passenger Sameer Kapoor fell from Coach C2 of the Mumbai–Pune Intercity Express following an intense altercation. The State alleges Rohan Verma intentionally pushed Kapoor to eliminate a business creditor. The Defence contends Kapoor lost his footing on an unlatched vestibule gate during a sudden jostle. The Court must decide whether murder under BNS §103 is established beyond reasonable doubt or whether vital physical evidence is missing under BSA §104.",
+    accused: "Rohan Verma (Passenger)",
+    victim: "State Prosecution (Railway Police)",
+    prosecutionAgent: "Agent 02 — Public Prosecutor",
+    defenseAgent: "Agent 01 — Criminal Defense Advocate",
+    statute: "BNS §103 (Murder) vs. BNS §105 (Culpable Homicide)",
+    statuteGloss: "Intentional causing of death vs. Act done with knowledge without intent to cause death.",
+    whatToExpect: "This simulation will autonomously present Opening Statements → Admitted Exhibits → Passenger Witness Deposition & Cross-Examination → Closing Arguments → Presiding Judicial Verdict in approximately 4 minutes.",
+    templateKey: "vestibule"
+  },
+  matrimonial_maintenance: {
+    id: "aud_matrimonial_maintenance",
+    docket: "MAT-2026-144",
+    title: "Pooja Deshmukh v. Siddharth Deshmukh",
+    category: "Family & Maintenance · BNSS §144",
+    badge: "~4 min hearing",
+    badgeType: "compact",
+    hook: "A tech consultant claims zero personal income to deny spousal support, until undisclosed digital asset accounts and offshore consulting retainers surface.",
+    whatHappened: "Following a bitter separation, Pooja Deshmukh petitioned for interim monthly maintenance of ₹1,20,000 for herself and minor child under BNSS §144. Siddharth claims his startup went bankrupt and produced IT returns showing nil income. The applicant's counsel introduced authenticated foreign exchange remittance records and crypto asset logs. The Court must assess whether concealed digital wealth proves substantial independent earnings justifying an urgent maintenance order.",
+    accused: "Siddharth Deshmukh (Respondent / Software Consultant)",
+    victim: "Pooja Deshmukh (Petitioner / Estranged Spouse)",
+    prosecutionAgent: "Agent 09 — Family & Matrimonial Specialist",
+    defenseAgent: "Agent 06 — Civil & Commercial Advocate",
+    statute: "BNSS §144 (Order for Maintenance of Wives & Children)",
+    statuteGloss: "Statutory right to monthly support proportionate to standard of living during marriage.",
+    whatToExpect: "This hearing evaluates Financial Disclosures → Forensic Bank Statements → Income Concealment Cross-Examination → Interim Maintenance Award in approximately 4 minutes.",
+    templateKey: "maintenance"
+  },
+  cyber_fraud: {
+    id: "aud_cyber_fraud",
+    docket: "CYB-2026-66D",
+    title: "Cyber Cell Cyberabad v. Vikram Singhania",
+    category: "Cyber Crime · IT Act §66D / BNS §318",
+    badge: "~4 min hearing",
+    badgeType: "compact",
+    hook: "A ₹4.2 Crore executive wire transfer was authorized via high-fidelity AI voice clone — was the CFO negligent, or was the accused the mastermind behind the synthetic identity ring?",
+    whatHappened: "On 12 October, an automated banking system released ₹4.2 Crore following an emergency WhatsApp voice authorization purportedly from the CEO. Forensic analysis revealed a 99.4% synthetic deepfake voice model trained on public podcast clips. The prosecution links server IP routing and digital wallet cash-outs to Vikram Singhania. The defence argues the digital fingerprint was spoofed via public cloud relay. The Court evaluates digital electronic certificate validity under BSA §63.",
+    accused: "Vikram Singhania (Cyber Security Analyst)",
+    victim: "Apex FinTech Ltd. (Complainant Corporation)",
+    prosecutionAgent: "Agent 12 — Cyber Law Specialist",
+    defenseAgent: "Agent 11 — White Collar Crime Specialist",
+    statute: "IT Act §66D & BNS §318(4) (Cheating by Impersonation via Computer)",
+    statuteGloss: "Fraudulent electronic impersonation to dishonestly induce transfer of funds.",
+    whatToExpect: "This cyber tribunal investigates Voice Biometrics → Digital Server Logs → Certificate Authenticity under BSA §63 → Presiding Judgment in approximately 4 minutes.",
+    templateKey: "cyber"
+  },
+  property_partition: {
+    id: "aud_property_partition",
+    docket: "CIV-2026-106",
+    title: "Karan Malhotra & Ors. v. Oberoi Realty Consortium",
+    category: "Civil Property & Tenancy · TPA §106",
+    badge: "~5 min hearing",
+    badgeType: "compact",
+    hook: "A 99-year ancestral lease on prime colonial estate expires, sparking a clash between third-generation residential heirs and a high-rise commercial developer with an unregistered deed.",
+    whatHappened: "The Malhotra family filed for immediate restoration of possession and injunction against commercial demolition of 'Malhotra Villa' after a 99-year ground lease elapsed. The developer produced an unregistered 2018 supplementary agreement asserting perpetual renewal rights. The plaintiffs allege the supplementary deed is a forged instrument under BNS §336. The Court must determine prima facie title and evidentiary admissibility under BSA §91.",
+    accused: "Oberoi Realty Consortium (Defendant Developer)",
+    victim: "Malhotra Heirs (Plaintiffs / Ground Lessors)",
+    prosecutionAgent: "Agent 06 — Civil & Property Specialist",
+    defenseAgent: "Agent 05 — Corporate & Contract Litigator",
+    statute: "Transfer of Property Act §106 / BNS §329 (Lease Determination & Trespass)",
+    statuteGloss: "Expiry of fixed lease terms and legal bar on unwritten/unregistered tenure extension.",
+    whatToExpect: "This civil trial examines 99-Year Title Deeds → Handwriting Expert Analysis → Sub-Registrar Records → Injunction Decree in approximately 5 minutes.",
+    templateKey: "property"
+  },
+  nanavati_benchmark: {
+    id: "aud_nanavati_benchmark",
+    docket: "CR-1959-302",
+    title: "K.M. Nanavati v. State of Maharashtra (1959/1962)",
+    category: "Constitutional Landmark Benchmark · Supreme Court of India",
+    badge: "Landmark Case · Full Length",
+    badgeType: "landmark",
+    hook: "India's most famous jury trial: A decorated naval officer discovers his wife's infidelity, drives to a naval base for a revolver, and confronts her lover in his bedroom.",
+    whatHappened: "Commander Nanavati returned home to Mumbai and learned from his wife Sylvia that she had been unfaithful with businessman Prem Ahuja. Nanavati dropped his family at a cinema, collected a .38 service revolver from his ship under false pretexts, drove to Ahuja's residence, and shot him three times in his bedroom. The case established the foundational Indian doctrine on 'cooling-off intervals' and the limits of the 'grave and sudden provocation' affirmative defense under Exception 1 to IPC §300.",
+    accused: "Commander K.M. Nanavati (Indian Navy)",
+    victim: "Prem Bhagwandas Ahuja (Deceased Businessman)",
+    prosecutionAgent: "Agent 02 — Public Prosecutor",
+    defenseAgent: "Agent 01 — Criminal Defense Advocate",
+    statute: "IPC §302 (Murder) vs. Exception 1 to §300 (Grave & Sudden Provocation)",
+    statuteGloss: "Whether intervening acts and elapsed time constitute a cooling-off interval that negates suddenness as a matter of law.",
+    whatToExpect: "This full-length landmark hearing features complete opening addresses, ballistic analysis, witness cross-examinations, affirmative defense rubric evaluation, and Supreme Court precedent decree.",
+    templateKey: "nanavati"
+  }
+};
+
+let selectedAudienceCaseKey = "railway_homicide";
+
+function renderAudienceGallery() {
+  const cont = document.getElementById("audienceGalleryCardsContainer");
+  if (!cont) return;
+  cont.innerHTML = "";
+  
+  Object.keys(AUDIENCE_GALLERY_CASES).forEach(key => {
+    const c = AUDIENCE_GALLERY_CASES[key];
+    const isLandmark = (c.badgeType === 'landmark');
+    const card = document.createElement("div");
+    card.className = "gallery-case-card";
+    card.id = `audCaseCard_${key}`;
+    card.onclick = () => selectAudienceGalleryCase(key);
+    
+    card.innerHTML = `
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; gap:8px;">
+          <span style="font-family:'JetBrains Mono', monospace; font-size:9px; letter-spacing:1px; color:var(--brass); text-transform:uppercase;">${esc(c.category)}</span>
+          <span class="runtime-badge ${isLandmark ? 'landmark' : 'compact'}">${isLandmark ? '🏛️ ' : '⏱️ '}${esc(c.badge)}</span>
+        </div>
+        <h3 style="font-family:'Fraunces', serif; font-size:16px; font-weight:700; color:var(--paper); margin:0 0 4px;">${esc(c.title)}</h3>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--brass-bright);">${esc(c.docket)}</div>
+        <p class="gallery-case-hook">"${esc(c.hook)}"</p>
+      </div>
+      <div>
+        <div style="font-size:11px; color:var(--paper-dim); margin-bottom:12px; line-height:1.4;">
+          <span style="color:var(--paper-faint);">Charge / Dispute:</span> <strong style="color:var(--paper);">${esc(c.statute.split(' vs.')[0])}</strong>
+        </div>
+        <button class="btn-secondary" style="width:100%; padding:8px 12px; font-size:11px; font-weight:600; border-color:var(--brass); color:var(--brass-bright);" onclick="event.stopPropagation(); selectAudienceGalleryCase('${key}')">
+          [ REVIEW BRIEFING &amp; WATCH → ]
+        </button>
+      </div>
+    `;
+    cont.appendChild(card);
+  });
+}
+
+function openAudienceGalleryModal() {
+  renderAudienceGallery();
+  openModal('modalAudienceGallery');
+}
+
+function selectAudienceGalleryCase(key) {
+  selectedAudienceCaseKey = key;
+  closeModal('modalAudienceGallery');
+  const c = AUDIENCE_GALLERY_CASES[key] || AUDIENCE_GALLERY_CASES.railway_homicide;
+  
+  const isLandmark = (c.badgeType === 'landmark');
+  document.getElementById("briefingCategoryBadge").innerText = c.category;
+  document.getElementById("briefingCaseTitle").innerText = c.title;
+  document.getElementById("briefingDocketNum").innerText = `DOCKET: ${c.docket}`;
+  
+  const bBadge = document.getElementById("briefingRuntimeBadge");
+  if (bBadge) {
+    bBadge.className = `runtime-badge ${isLandmark ? 'landmark' : 'compact'}`;
+    bBadge.innerText = isLandmark ? `🏛️ ${c.badge}` : `⏱️ ${c.badge}`;
+  }
+  
+  document.getElementById("briefingHookText").innerText = `"${c.hook}"`;
+  document.getElementById("briefingWhatHappenedText").innerText = c.whatHappened;
+  
+  document.getElementById("briefingProsecutionParty").innerText = c.victim || "State Prosecution";
+  document.getElementById("briefingProsecutionAgent").innerText = c.prosecutionAgent || "Agent 02 — Public Prosecutor";
+  
+  document.getElementById("briefingDefenseParty").innerText = c.accused || "Accused Party";
+  document.getElementById("briefingDefenseAgent").innerText = c.defenseAgent || "Agent 01 — Criminal Defense Advocate";
+  
+  document.getElementById("briefingStatuteText").innerText = c.statute;
+  document.getElementById("briefingStatuteGlossText").innerText = c.statuteGloss;
+  document.getElementById("briefingWhatToExpectText").innerText = c.whatToExpect;
+  
+  openModal('modalCaseBriefing');
+}
+
+function backToAudienceGallery() {
+  closeModal('modalCaseBriefing');
+  openModal('modalAudienceGallery');
+}
+
+async function startAudienceTrialFromBriefing() {
+  closeModal('modalCaseBriefing');
+  isAudienceMode = true;
+  document.body.classList.add('audience-mode');
+  
+  const cInfo = AUDIENCE_GALLERY_CASES[selectedAudienceCaseKey] || AUDIENCE_GALLERY_CASES.railway_homicide;
+  const tmplKey = cInfo.templateKey || "vestibule";
+  const tmpl = CASE_TEMPLATES[tmplKey] || CASE_TEMPLATES.vestibule || CASE_TEMPLATES.criminal;
+  
+  try {
+    // 1. Create fresh case matter
+    const createRes = await fetch(`${API_BASE}/api/cases`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: tmpl.title,
+        jurisdiction: tmpl.jurisdiction,
+        case_category: tmpl.category,
+        simulation_type: tmpl.simType,
+        charge_or_dispute: tmpl.charge,
+        facts: tmpl.facts,
+        counsel_filing_id: "agent_02",
+        counsel_opposing_id: "agent_01"
+      })
+    });
+    const newCase = await createRes.json();
+    activeCaseId = newCase.id;
+
+    // 2. Start trial
+    await fetch(`${API_BASE}/api/cases/${newCase.id}/trial/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+
+    // 3. Load case into courtroom
+    const caseRes = await fetch(`${API_BASE}/api/cases/${newCase.id}`);
+    currentCaseData = await caseRes.json();
+    
+    renderCourtroomArena(currentCaseData);
+    showView('courtroom');
+    
+    // 4. Run Countdown Start Sequence (3, 2, 1) -> Judge Opening Beat -> Autonomous Playback
+    runCourtroomCountdown(currentCaseData);
+  } catch (err) {
+    console.error("Failed to launch audience trial:", err);
+    await loadBenchmarkDemo(true);
+  }
+}
+
+function runCourtroomCountdown(c) {
+  const overlay = document.getElementById("crtCountdownOverlay");
+  const numEl = document.getElementById("crtCountdownNumber");
+  const subtitleEl = document.getElementById("crtCountdownSubtitle");
+  const titleEl = document.getElementById("crtCountdownCaseTitle");
+  
+  if (titleEl && c) {
+    titleEl.innerText = c.title || "State of Maharashtra v. Rohan Verma";
+  }
+
+  // Check prefers-reduced-motion
+  const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
+  if (prefersReducedMotion || !overlay || !numEl) {
+    if (overlay) overlay.style.display = "none";
+    renderCourtOpeningBeat(c);
+    return;
+  }
+
+  overlay.style.display = "flex";
+  overlay.style.opacity = "1";
+  if (subtitleEl) subtitleEl.innerText = "All Rise · The Court is Coming to Order";
+  numEl.innerText = "3";
+
+  setTimeout(() => {
+    numEl.innerText = "2";
+    setTimeout(() => {
+      numEl.innerText = "1";
+      setTimeout(() => {
+        if (subtitleEl) subtitleEl.innerText = "The Bench is Seated";
+        numEl.style.fontSize = "38px";
+        numEl.innerText = "⚖️ Court is now in session";
+        setTimeout(() => {
+          overlay.style.opacity = "0";
+          setTimeout(() => {
+            overlay.style.display = "none";
+            numEl.style.fontSize = "96px";
+            renderCourtOpeningBeat(c);
+          }, 400);
+        }, 850);
+      }, 850);
+    }, 850);
+  }, 850);
+}
+
+function renderCourtOpeningBeat(c) {
+  if (!c) return;
+  const phaseLabel = document.getElementById("crtPhaseLabel");
+  if (phaseLabel) phaseLabel.innerText = "COURT OPENING · CHARGES FRAMED";
+  
+  const speakerBubble = document.getElementById("crtSpeakerBubble");
+  const speakerLabel = document.getElementById("crtSpeakerLabel");
+  const speakerPill = document.getElementById("crtSpeakerStatusPill");
+  const questionEl = document.getElementById("crtQuestionText");
+  const answerBubble = document.getElementById("crtAnswerBubble");
+
+  if (speakerBubble) speakerBubble.className = "crt-speaker-bubble judge-bubble";
+  if (speakerLabel) {
+    speakerLabel.innerText = "⚖ PRESIDING JUDGE — COURT OPENING";
+    speakerLabel.style.color = "var(--brass-bright)";
+  }
+  if (speakerPill) {
+    speakerPill.innerText = "SESSION OPENED";
+    speakerPill.className = "status-badge deliberation";
+  }
+  if (questionEl) {
+    questionEl.innerText = `"Court is now in session in the matter of ${c.title}. The charges and framed issues have been placed on the judicial record. The Prosecution will now deliver its opening address."`;
+    crtActiveTurnText = questionEl.innerText;
+  }
+  if (answerBubble) answerBubble.style.display = "none";
+  
+  // Audio narration if voice is active
+  if (isAudioPlaying && crtActiveTurnText) {
+    speakText(crtActiveTurnText);
+  }
+
+  // Start autonomous playback pacing after brief initial opening pause
+  setTimeout(() => {
+    startAudienceAutonomousPlayback();
+  }, 2400);
+}
+
 function openEnterCourtChoiceModal() {
   openModal('modalEnterCourtChoice');
 }
@@ -5275,7 +5824,7 @@ function enterCourtAsAudience() {
   closeModal('modalEnterCourtChoice');
   isAudienceMode = true;
   document.body.classList.add('audience-mode');
-  loadBenchmarkDemo(true);
+  openAudienceGalleryModal();
 }
 
 function enterCourtAsFilingAdvocate() {
@@ -5821,6 +6370,55 @@ At trial in the Sessions Court, Greater Bombay, a jury returned a verdict of "no
         expected_testimony: "Confirms cause of death as three gunshot wounds, consistent with the recovered revolver.",
         status: "ready_to_call"
       }
+    ]
+  },
+  maintenance: {
+    title: "Pooja Deshmukh v. Siddharth Deshmukh",
+    jurisdiction: "Family Court & Sessions Bench, Pune",
+    category: "family",
+    simType: "standard",
+    charge: "Interim Maintenance Application under Bharatiya Nagarik Suraksha Sanhita, 2023 §144 / HMA §24.",
+    facts: "Following seven years of marriage, Pooja Deshmukh instituted matrimonial proceedings and petitioned for interim monthly maintenance of ₹1,20,000 for herself and her four-year-old child under BNSS §144. Respondent Siddharth Deshmukh, a former enterprise software architect, filed an affidavit asserting insolvency following the liquidation of his startup in December 2025 and submitted official IT returns reflecting nil taxable income. The petitioner produced authenticated foreign remittances, corporate credit card statements, and secondary digital wallet records demonstrating continuous monthly expenditure exceeding ₹2,50,000. Siddharth claims the funds represented short-term developer loans from offshore acquaintances. The Court must determine whether concealed digital assets and earning potential justify an immediate interim maintenance award.",
+    issues: [
+      "Whether the respondent possesses sufficient independent means or earning capability under BNSS §144 to pay interim maintenance.",
+      "Whether documented offshore bank remittances and digital expenditures rebut the respondent's plea of insolvency."
+    ],
+    prosAccount: "Respondent maintains an opulent standard of living through offshore retainers and concealed crypto assets while falsely pleading bankruptcy to deprive petitioner and child of statutory maintenance.",
+    prosTheory: "Documented overseas remittances and sustained personal lifestyle establish substantial actual income under BNSS §144, entitling petitioner to parity of living standards.",
+    defAccount: "Respondent's startup dissolved under heavy debt; current expenses are temporarily covered by family borrowings, and no steady revenue stream exists.",
+    defTheory: "Unsecured personal loans cannot be imputed as taxable income; maintenance must reflect proven liquid resources rather than theoretical past earnings.",
+    evidenceList: [
+      { id: "P-EX-01", submitted_by: "prosecution", title: "Forensic Bank Statement & Overseas Remittance Report", evidence_type: "digital_record", description: "Certified records showing ₹14.8 Lakhs inbound remittance across 6 months.", status: "ready_to_offer", file_hash: "SHA-256: 3c9b7e12f00a44de", chain_of_custody: "Produced under Banker's Books Evidence Act" },
+      { id: "P-EX-02", submitted_by: "prosecution", title: "Residential Lease & Luxury Vehicle Record", evidence_type: "document", description: "High-value tenancy agreement executed in respondent's name.", status: "ready_to_offer", file_hash: "NOT PROVIDED", chain_of_custody: "Retrieved via sub-registrar registry" },
+      { id: "D-EX-01", submitted_by: "defense", title: "Startup Insolvency Resolution & Liquidation Filing", evidence_type: "document", description: "NCLT company strike-off and debt ledger.", status: "ready_to_offer", file_hash: "NOT PROVIDED", chain_of_custody: "Certified copy from RoC" }
+    ],
+    witnessList: [
+      { id: "PW-01", called_by: "prosecution", name: "Sunita Kulkarni", role: "bank_officer", connection_to_case: "Forensic Financial Accountant", expected_testimony: "Explain overseas consulting cash flows and lifestyle expenditure.", status: "ready_to_call" },
+      { id: "DW-01", called_by: "defense", name: "Rajesh Iyer", role: "expert", connection_to_case: "Former Startup Co-founder", expected_testimony: "Confirm enterprise failure, corporate liabilities, and loan obligations.", status: "ready_to_call" }
+    ]
+  },
+  property: {
+    title: "Karan Malhotra & Ors. v. Oberoi Realty Consortium",
+    jurisdiction: "Civil Court (Senior Division), Mumbai",
+    category: "property",
+    simType: "standard",
+    charge: "Suit for Permanent Injunction & Eviction under Transfer of Property Act §106 / Specific Relief Act §38.",
+    facts: "The plaintiffs, heirs of the late Justice H.R. Malhotra, filed a civil suit for permanent injunction and restoration of vacant possession of 'Malhotra Villa', a prime colonial estate in Bandra. A 99-year registered ground lease granted in 1927 officially determined and expired on 31 December 2025. The defendant developer, Oberoi Realty Consortium, resisted eviction by producing an unregistered 2018 supplementary memorandum purportedly executed by a deceased co-lessor granting an unconditional 30-year renewal. The plaintiffs assert the supplementary document is a forged instrument under BNS §336 and inadmissible for lack of mandatory registration under Section 17 of the Registration Act, 1908 and Section 91 of BSA, 2023.",
+    issues: [
+      "Whether the 99-year lease stood determined by efflux of time under Section 111(a) of Transfer of Property Act.",
+      "Whether an unregistered supplementary renewal agreement can be admitted in evidence to establish tenancy extension under BSA §91 / Registration Act §49."
+    ],
+    prosAccount: "The lease expired by operation of law; the purported renewal memorandum is an unregistered forged instrument created to illegally usurp high-value urban real estate.",
+    prosTheory: "Clear expiry of registered 99-year term entitles owners to immediate vacant possession; unregistered documents cannot create or extend real property rights under BSA §91.",
+    defAccount: "The developer invested ₹18 Crore in infrastructure improvements relying on the 2018 supplementary agreement and is protected by equitable doctrine of part-performance under TPA §53A.",
+    defTheory: "Continuous possession, substantial capital improvements, and written acknowledgment establish lawful tenant-holding-over status under TPA §53A.",
+    evidenceList: [
+      { id: "P-EX-01", submitted_by: "prosecution", title: "Original 1927 Registered Ground Lease Indenture", evidence_type: "document", description: "Certified copy of registered 99-year lease expiring Dec 2025.", status: "ready_to_offer", file_hash: "SHA-256: a1b2c3d4e5f60718", chain_of_custody: "Preserved in family archives" },
+      { id: "D-EX-01", submitted_by: "defense", title: "2018 Unregistered Supplementary Memorandum", evidence_type: "document", description: "Purported 30-year renewal deed with disputed signatures.", status: "ready_to_offer", file_hash: "NOT PROVIDED", chain_of_custody: "Produced by defendant developer" }
+    ],
+    witnessList: [
+      { id: "PW-01", called_by: "prosecution", name: "Dr. Aniruddh Parekh", role: "expert", connection_to_case: "Chief Forensic Document & Handwriting Examiner", expected_testimony: "Testify on signature discrepancies on 2018 memorandum.", status: "ready_to_call" },
+      { id: "DW-01", called_by: "defense", name: "Gautam Oberoi", role: "employee", connection_to_case: "Managing Director, Oberoi Consortium", expected_testimony: "Describe capital investments, lease negotiations, and physical possession.", status: "ready_to_call" }
     ]
   }
 };
@@ -7079,13 +7677,18 @@ function updateCenterHearingDisplay(c, stage, spk) {
     speakerLabel.innerText = "⚖ PRESIDING JUDGE — FINAL JUDGMENT & ORDER";
     speakerLabel.style.color = "var(--brass-bright)";
     
-    const vDecision = (c.verdict && c.verdict.decision) ? c.verdict.decision : "VERDICT RENDERED";
-    const isNG = vDecision.toLowerCase().includes('not guilty');
-    speakerPill.innerText = vDecision;
+    const vDecision = (c.verdict && c.verdict.decision) ? c.verdict.decision.trim() : "VERDICT RENDERED";
+    const isNG = vDecision.toLowerCase().includes('not guilty') || vDecision.toLowerCase().includes('acquitted') || vDecision.toLowerCase().includes('dismissed');
+    speakerPill.innerText = vDecision.length > 28 ? (isNG ? "NOT GUILTY" : "GUILTY / DETERMINED") : vDecision;
     speakerPill.className = "status-badge " + (isNG ? 'defense' : 'prosecution');
     
-    const vBasis = (c.verdict && c.verdict.decision_basis) ? c.verdict.decision_basis : "The Court has delivered its final judicial decree on all issues framed.";
-    questionEl.innerText = `"${vDecision}: ${vBasis}"`;
+    const vBasis = (c.verdict && c.verdict.decision_basis) ? c.verdict.decision_basis.trim() : "";
+    
+    let finalRulingText = vBasis || vDecision;
+    if (vBasis && vDecision && !vBasis.toLowerCase().includes(vDecision.toLowerCase()) && !vDecision.toLowerCase().includes(vBasis.toLowerCase())) {
+      finalRulingText = `${vDecision}: ${vBasis}`;
+    }
+    questionEl.innerText = `"${finalRulingText}"`;
     
     answerBubble.style.display = "none";
     if (actionBtn) {

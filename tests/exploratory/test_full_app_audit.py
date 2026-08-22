@@ -74,10 +74,14 @@ def test_full_application_audit():
         expect(page.locator("#modalEnterCourtChoice")).to_be_visible()
         print("✓ Choice Modal displayed properly")
 
-        # Test Entering Audience Mode
+        # Test Entering Audience Mode via Gallery and Briefing
         page.locator("#btnChoiceAudience").click()
+        expect(page.locator("#modalAudienceGallery")).to_be_visible()
+        page.locator("#modalAudienceGallery .gallery-case-card button").first.click()
+        expect(page.locator("#modalCaseBriefing")).to_be_visible()
+        page.locator("#btnBriefingEnterCourt").click()
         expect(page.locator("#viewCourtroom")).to_be_visible()
-        print("✓ View as Audience transitions seamlessly into Courtroom")
+        print("✓ View as Audience transitions seamlessly through Gallery and Briefing into Courtroom")
 
         # In Audience Mode, verify controls are non-interactive
         expect(page.locator("#modalObjection")).to_be_hidden()
