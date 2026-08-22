@@ -1,12 +1,12 @@
-# VerdictAI 
-### Autonomous AI Courtroom Arena & Indian Statutory Legal Reasoning Platform
+# VerdictAI
+### AI Courtroom Arena & Indian Statutory Legal Reasoning Platform
 
 <p align="center">
   <em>An autonomous, multi-agent adversarial courtroom simulator grounded in Indian law.</em>
 </p>
 
 <p align="center">
-  <a href="https://nyay-manch.onrender.com"><img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-nyay--manch.onrender.com-success?style=for-the-badge" /></a>
+  <a href="https://verdict-ai-hisy.onrender.com"><img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-verdict--ai--hisy.onrender.com-success?style=for-the-badge" /></a>
 </p>
 
 <p align="center">
@@ -19,18 +19,19 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://nyay-manch.onrender.com">🔴 Live Demo — https://verdict-ai-hisy.onrender.com/</a></strong>
+  <strong><a href="https://verdict-ai-hisy.onrender.com">🔴 Live Demo — verdict-ai-hisy.onrender.com</a></strong>
 </p>
 
 ---
 
-> ⚖️ **Educational & Research Simulation.** VerdictAI (Nyay Manch) does not provide legal advice
+> ⚖️ **Educational & Research Simulation.** VerdictAI does not provide legal advice
 > and does not represent actual judicial proceedings or binding judgments. See
 > [Disclaimer](#-disclaimer).
 
 ## Table of Contents
 
-- [What is VerdictAI (Nyay Manch)?](#-what-is-verdictai-nyay-manch)
+- [What is VerdictAI?](#-what-is-verdictai)
+- [Highlights](#-highlights)
 - [Key Features](#-key-features)
 - [Architecture](#-architecture)
 - [Tech Stack](#-tech-stack)
@@ -46,14 +47,16 @@
 
 ---
 
-## 🏛️ What is VerdictAI (Nyay Manch)?
+## 🏛️ What is VerdictAI?
 
-VerdictAI (Nyay Manch) is a turn-based, multi-agent courtroom simulator built to explore how
-LLM agents reason through adversarial legal argument. Rather than a single model
-producing a plausible-sounding answer, a full case is contested — a Prosecution
-agent and a Defence agent build independent theories from a shared, canonical
-fact record, examine witnesses, introduce evidence, and argue before a Presiding
-Judge agent that must issue a reasoned, statute-grounded verdict.
+**VerdictAI** — internally and culturally known as **Nyay Manch (न्याय मंच)**,
+Hindi for "justice platform" — is a turn-based, multi-agent courtroom simulator
+built to explore how LLM agents reason through adversarial legal argument.
+Rather than a single model producing a plausible-sounding answer, a full case
+is contested — a Prosecution agent and a Defence agent build independent
+theories from a shared, canonical fact record, examine witnesses, introduce
+evidence, and argue before a Presiding Judge agent that must issue a reasoned,
+statute-grounded verdict.
 
 The platform models proceedings under India's modernized criminal law framework —
 the **Bharatiya Nyaya Sanhita (BNS)**, **Bharatiya Sakshya Adhiniyam (BSA)**, and
@@ -248,7 +251,7 @@ python tests/exploratory/agentic_checks.py
 
 ## 🌐 Production Deployment
 
-**Live at [nyay-manch.onrender.com](https://nyay-manch.onrender.com)**, deployed
+**Live at [verdict-ai-hisy.onrender.com](https://verdict-ai-hisy.onrender.com)**, deployed
 as a Render Python 3 web service.
 
 ### Deployment notes
@@ -313,9 +316,9 @@ Distributed under the MIT License. See `LICENSE` for details.
 
 ## 📜 Disclaimer
 
-Nyay Manch is an educational, research, and simulation platform. It does not
-provide legal advice, does not represent actual judicial proceedings, and its
-outputs are not binding judgments. Statutory references are provided for
-educational purposes and should be independently verified — via
-[India Code](https://www.indiacode.nic.in) or a qualified legal professional —
-before being relied upon for any real matter.
+VerdictAI (Nyay Manch) is an educational, research, and simulation platform.
+It does not provide legal advice, does not represent actual judicial
+proceedings, and its outputs are not binding judgments. Statutory references
+are provided for educational purposes and should be independently verified —
+via [India Code](https://www.indiacode.nic.in) or a qualified legal
+professional — before being relied upon for any real matter.
