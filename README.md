@@ -1,76 +1,154 @@
-# Nyay Manch (न्याय मंच) — AI Courtroom Arena & Indian Law Reasoning Platform
+# Nyay Manch (न्याय मंच)
+### AI Courtroom Arena & Indian Statutory Legal Reasoning Platform
 
-[![Tests](https://img.shields.io/badge/Playwright%20E2E-13%20Passing-brightgreen)]()
-[![Backend](https://img.shields.io/badge/FastAPI-2.5.0-blue)]()
-[![LLM](https://img.shields.io/badge/Groq-Multi--Model%20Fallback-orange)]()
-[![Jurisprudence](https://img.shields.io/badge/Statutes-BNS%20%7C%20BNSS%20%7C%20BSA%202023-gold)]()
+<p align="center">
+  <em>An autonomous, multi-agent adversarial courtroom simulator grounded in Indian law.</em>
+</p>
 
-**Nyay Manch** is an autonomous, turn-based multi-agent courtroom simulator and Indian statutory legal reasoning engine. It models realistic adversarial proceedings under the **Bharatiya Nyaya Sanhita (BNS)**, **Bharatiya Sakshya Adhiniyam (BSA)**, and **Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023**.
+<p align="center">
+  <img alt="Tests" src="https://img.shields.io/badge/Playwright%20E2E-13%20Passing-brightgreen" />
+  <img alt="Backend" src="https://img.shields.io/badge/FastAPI-2.5.0-blue" />
+  <img alt="LLM" src="https://img.shields.io/badge/Groq-Multi--Model%20Fallback-orange" />
+  <img alt="Jurisprudence" src="https://img.shields.io/badge/Statutes-BNS%20%7C%20BNSS%20%7C%20BSA%202023-gold" />
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-lightgrey" />
+</p>
+
+---
+
+> ⚖️ **Educational & Research Simulation.** Nyay Manch does not provide legal advice
+> and does not represent actual judicial proceedings or binding judgments. See
+> [Disclaimer](#-disclaimer).
+
+## Table of Contents
+
+- [What is Nyay Manch?](#-what-is-nyay-manch)
+- [Key Features](#-key-features)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Quick Start](#-quick-start-local-setup)
+- [Project Structure](#-project-structure)
+- [Automated Testing](#-automated-testing-suite)
+- [Deployment](#-production-deployment)
+- [Benchmarking Against Real Case Law](#-benchmarking-against-real-case-law)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Disclaimer](#-disclaimer)
 
 ---
 
-## 🏛️ Key Features
+## 🏛️ What is Nyay Manch?
 
-- **Adversarial AI Courtroom Simulation**: Sequential turns between Prosecution and Defence agents, witness examination under oath, cross-examination, procedural objections, and judicial deliberation.
-- **14 Specialist AI Advocates**: Roster of distinct legal personalities across criminal defense, prosecution, constitutional law, cyber forensics, and commercial litigation.
-- **8-Step Case Filing Intake Wizard**: Comprehensive dossier builder for facts, charges, counsel mutual-exclusivity, registered exhibits (P-EX / D-EX), witness depositions, and legal issues.
-- **Dual Courtroom Modes**:
-  - **Audience Mode**: Autonomous broadcast where the user observes the entire trial unfold passively with synchronized audio narration.
-  - **Filer Mode**: Interactive litigation with turn advancing, procedural objections, evidence introduction, and instant fast-forwarding to verdict.
-- **Official Indian Statutory Library**: Verified semantic search and provision inspector for BNS, BNSS, BSA, IT Act, and the Constitution of India.
-- **Cinematic Verdict & Formal Judicial Decree**: Multi-prong judicial reasoning, issue findings, evidentiary citations, and one-click export (Markdown & JSON).
-- **High-Throughput Multi-Model Fallback**: Dynamic Groq API quota failover across `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, and `qwen/qwen3.6-27b` with zero rate-limit interruptions.
+Nyay Manch is a turn-based, multi-agent courtroom simulator built to explore how
+LLM agents reason through adversarial legal argument. Rather than a single model
+producing a plausible-sounding answer, a full case is contested — a Prosecution
+agent and a Defence agent build independent theories from a shared, canonical
+fact record, examine witnesses, introduce evidence, and argue before a Presiding
+Judge agent that must issue a reasoned, statute-grounded verdict.
 
----
+The platform models proceedings under India's modernized criminal law framework —
+the **Bharatiya Nyaya Sanhita (BNS)**, **Bharatiya Sakshya Adhiniyam (BSA)**, and
+**Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023** — alongside a wider library of
+practice areas (family, civil, corporate, cyber, IP, tax, constitutional,
+employment, environmental, human rights, and banking law).
+
+## ✨ Key Features
+
+- **Adversarial AI Courtroom Simulation** — sequential turns between Prosecution
+  and Defence, witness examination under oath, cross-examination, procedural
+  objections, and judicial deliberation.
+- **14 Specialist AI Advocates** — a roster of distinct counsel agents (Criminal
+  Defence, Public Prosecutor, Family & Matrimonial, Civil, Real Estate,
+  Corporate, Cyber, IP, Tax, Constitutional, Employment, Environmental, Human
+  Rights, Banking & Finance), each grounded in a domain-specific knowledge base
+  via retrieval-augmented generation — not live web scraping.
+- **8-Step Case Filing Intake Wizard** — Case Identity → Counsel Selection →
+  Facts → Issues → Parties → Evidence → Witnesses → Review, with a canonical
+  fact record every agent is constrained to reason from.
+- **Counsel Mutual-Exclusivity** — the filing and opposing sides can never be
+  assigned the same specialist agent, enforced on both the frontend and the API.
+- **Dual Courtroom Modes**
+  - **Audience Mode** — a fully passive, autonomous broadcast. The trial plays
+    from opening statement to verdict with no user interaction required or
+    permitted; the agents run the case entirely on their own.
+  - **Filer Mode** — interactive litigation with manual turn advancement,
+    objections, exhibit introduction, and judge rulings, plus a
+    fast-forward-to-verdict option.
+- **Official Indian Statutory Library** — a searchable provision inspector
+  across BNS, BNSS, BSA, the IT Act, and the Constitution of India.
+- **Cinematic Verdict & Formal Judicial Decree** — issue-by-issue judicial
+  findings, evidentiary citations, statutory provision evaluation, and one-click
+  export to Markdown or JSON.
+- **High-Throughput Multi-Model Fallback** — dynamic Groq API quota failover
+  across multiple models with zero rate-limit interruptions.
 
 ## 🏗️ Architecture
 
 ```
                                   ┌────────────────────────┐
-                                  │   FastAPI Web Server   │
-                                  │   & Static Frontend    │
-                                  └───────────┬────────────┘
+                                  │   FastAPI Web Server    │
+                                  │   & Static Frontend     │
+                                  └───────────┬─────────────┘
                                               │
-                                  ┌───────────▼────────────┐
-                                  │   Trial Orchestrator   │
-                                  │   (State Machine)      │
-                                  └───────────┬────────────┘
+                                  ┌───────────▼─────────────┐
+                                  │   Trial Orchestrator     │
+                                  │   (State Machine)        │
+                                  └───────────┬─────────────┘
                                               │
         ┌─────────────────────────────────────┼─────────────────────────────────────┐
         │                                     │                                     │
 ┌───────▼────────┐                   ┌────────▼─────────┐                  ┌────────▼────────┐
-│ Prosecution    │                   │ Defense          │                  │ Presiding Judge │
-│ Agent (Groq)   │                   │ Agent (Groq)     │                  │ Agent (Groq)    │
+│ Prosecution    │                   │ Defence           │                  │ Presiding Judge │
+│ Agent (Groq)   │                   │ Agent (Groq)      │                  │ Agent (Groq)    │
 └───────┬────────┘                   └────────┬─────────┘                  └────────┬────────┘
         │                                     │                                     │
         └──────────────────┬──────────────────┘                                     │
-                           │                                                        │
-                  ┌────────▼─────────┐                                              │
-                  │ Witness Stand    │◄─────────────────────────────────────────────┘
-                  │ (Witness Agents) │          (Admissibility, Rulings & Decree)
-                  └────────┬─────────┘
-                           │
-                  ┌────────▼─────────┐
-                  │ Statutory Engine │
-                  │ (BNS, BSA, BNSS) │
-                  └──────────────────┘
+                            │                                                        │
+                   ┌────────▼─────────┐                                              │
+                   │ Witness Stand     │◄─────────────────────────────────────────────┘
+                   │ (Witness Agents)  │          (Admissibility, Rulings & Decree)
+                   └────────┬─────────┘
+                            │
+                   ┌────────▼─────────┐
+                   │ RAG Knowledge Base│
+                   │ (per-domain index)│
+                   └────────┬─────────┘
+                            │
+                   ┌────────▼─────────┐
+                   │ Statutory Engine  │
+                   │ (BNS, BSA, BNSS)  │
+                   └────────────────────┘
 ```
 
----
+Each specialist counsel agent's system prompt is augmented at case-creation
+time with passages retrieved from its own domain's vector index — grounding
+its arguments in real statutory text and landmark-case doctrine rather than
+general-purpose legal knowledge.
+
+## 🧰 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | FastAPI (Python) |
+| LLM Inference | Groq API, multi-model fallback |
+| Agent Knowledge | RAG — local vector store (FAISS/ChromaDB) per legal domain |
+| Frontend | HTML / CSS / JS (single-file, no build step) |
+| Testing | Playwright (E2E), agentic exploratory testing |
+| Statutes Modeled | BNS, BNSS, BSA (2023), IT Act 2000, Constitution of India, and 10+ other Indian acts by practice area |
 
 ## 🚀 Quick Start (Local Setup)
 
 ### 1. Clone & Configure Environment
 
 ```bash
-git clone https://github.com/your-username/courtroom-arena.git
-cd courtroom-arena/backend
+git clone https://github.com/your-username/nyay-manch.git
+cd nyay-manch/backend
 
-# Create & activate virtual environment
+# Create & activate a virtual environment
 python -m venv venv
-# On Windows:
+# Windows:
 .\venv\Scripts\activate
-# On Linux/macOS:
+# Linux/macOS:
 source venv/bin/activate
 
 # Install dependencies
@@ -80,39 +158,67 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Add your free [Groq API Key](https://console.groq.com/keys) to `backend/.env`:
+Add your free [Groq API key](https://console.groq.com/keys) to `backend/.env`:
+
 ```env
 GROQ_API_KEY=gsk_your_actual_api_key_here
 GROQ_MODEL=openai/gpt-oss-120b
 ```
 
-### 2. Run the Backend API & Frontend
+### 2. Run the Backend & Frontend
 
 ```bash
-# Start FastAPI backend (serves API on :8000 and static frontend on /)
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Open [http://localhost:8000](http://localhost:8000) in your browser.
 
-*(Optional standalone frontend dev server: `python -m http.server 5500` from the root directory).*
+*(Optional standalone frontend dev server: `python -m http.server 5500` from
+the repository root.)*
 
----
+## 📁 Project Structure
+
+```
+nyay-manch/
+├── backend/
+│   ├── main.py                      FastAPI app entrypoint
+│   ├── config.py                    Env var loading, model fallback config
+│   ├── requirements.txt
+│   ├── .env.example
+│   ├── models/                      Pydantic schemas (Case, Verdict, etc.)
+│   ├── agents/                      Prosecution, Defence, Judge, Witness agents
+│   ├── knowledge_base/              Per-domain statute/case-law source files
+│   ├── rag/                         Chunking, embedding, retrieval pipeline
+│   ├── orchestration/               Trial state machine
+│   ├── services/                    Case store, transcript rendering
+│   └── routers/                     API endpoints
+├── frontend/
+│   └── index.html                   Single-file UI (docket/ledger design system)
+└── tests/
+    ├── e2e/                         Playwright regression suite
+    └── exploratory/                 Agentic UX exploration scripts
+```
 
 ## 🧪 Automated Testing Suite
 
-The codebase includes full Playwright end-to-end and exploratory test suites:
+The codebase includes a Playwright end-to-end suite covering demo login, the
+full 8-step case-filing flow, counsel mutual-exclusivity, both courtroom modes,
+verdict export, and landing-page CTA hygiene — plus a supplementary agentic
+exploratory testing layer for catching UX friction that scripted assertions
+wouldn't think to check.
 
 ```bash
-# Run all automated tests
-pytest tests -v
-```
+# Run the full E2E suite
+pytest tests/e2e -v
 
----
+# Run exploratory agentic checks (slower, qualitative)
+python tests/exploratory/agentic_checks.py
+```
 
 ## 🌐 Production Deployment
 
-### Option 1: Docker / Container
+### Option 1 — Docker
+
 ```dockerfile
 FROM python:3.11-slim
 WORKDIR /app
@@ -123,12 +229,47 @@ WORKDIR /app/backend
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-### Option 2: Render / Railway / Heroku
-- **Build Command**: `pip install -r backend/requirements.txt`
-- **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-- **Environment Variables**: Set `GROQ_API_KEY` in your platform dashboard.
+### Option 2 — Render / Railway / Heroku
 
----
+- **Build Command:** `pip install -r backend/requirements.txt`
+- **Start Command:** `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+- **Environment Variables:** set `GROQ_API_KEY` in your platform's dashboard.
+
+## ⚖️ Benchmarking Against Real Case Law
+
+To validate the judge agent's reasoning quality, this project was benchmarked
+against **K.M. Nanavati v. State of Maharashtra (1959)** — a landmark, fully
+public Indian Supreme Court case with a well-documented real-world outcome.
+The simulation reached the same verdict as the actual courts (guilty of
+murder under IPC §302, provocation defense rejected), and the exercise
+surfaced a concrete, fixable gap between a *correct verdict* and *correct
+legal reasoning* — the judge agent's issue-by-issue analysis has since been
+strengthened to require it to engage with every framed legal issue
+individually rather than reaching a verdict that merely happens to be
+consistent with them.
+
+## 🗺️ Roadmap
+
+- [ ] Populate RAG knowledge bases for all 14 legal specialties (currently
+      prioritized: Criminal, Family, Civil)
+- [ ] Persist cases in Postgres instead of the in-memory store
+- [ ] Expand the statutory library's semantic search coverage
+- [ ] Additional real-case benchmarks across other practice areas
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. Please open an issue describing the
+change before submitting a large PR, so we can align on direction first.
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for details.
 
 ## 📜 Disclaimer
-Nyay Manch is an educational, research, and simulation platform. It does not provide legal advice and does not represent actual judicial proceedings or binding judgments.
+
+Nyay Manch is an educational, research, and simulation platform. It does not
+provide legal advice, does not represent actual judicial proceedings, and its
+outputs are not binding judgments. Statutory references are provided for
+educational purposes and should be independently verified — via
+[India Code](https://www.indiacode.nic.in) or a qualified legal professional —
+before being relied upon for any real matter.
