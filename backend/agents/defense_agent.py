@@ -99,7 +99,22 @@ DISCLAIMER: Fictional simulation for research and education, not real legal advi
             context_parts.append(f"CORRECTION: {correction_feedback}. Ensure strict grounding.")
 
         context_parts.append("Deliver your single rebuttal now as the specified JSON object.")
-        return self.say_json("\n\n".join(context_parts), max_tokens=1200, temperature=0.35)
+    def generate_opening(self) -> Dict[str, Any]:
+        prompt = """=== DEFENSE OPENING STATEMENT ===
+Present the Defense opening statement to the Court. Articulate the defense theory, the presumption of innocence under BSA §104, the requirement for standard of proof beyond reasonable doubt, and the alternative innocent explanation.
+
+Return ONLY a JSON object:
+{
+  "speaker": "defense",
+  "round": 1,
+  "argument_type": "opening_statement",
+  "legal_basis": "Presumption of Innocence & BSA §104",
+  "party_statement_ref": "Defense Opening",
+  "argument": "<your 2-3 paragraph opening statement>",
+  "evidence_references": ["Fact #3", "Fact #5"],
+  "strength": "strong"
+}"""
+        return self.say_json(prompt, max_tokens=1000, temperature=0.3)
 
     def generate_cross_question(
         self,

@@ -274,6 +274,55 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             content=arg_text,
         )
 
+        conn = database.get_db_connection()
+        with conn:
+            conn.execute(
+                "UPDATE cases SET current_stage = 'defence_opening', current_speaker = 'defense', updated_at = ? WHERE id = ?",
+                (datetime.datetime.utcnow().isoformat(), case.id),
+            )
+        conn.close()
+
+        return NextTurnResponse(
+            case_id=case.id,
+            status=CaseStatus.TRIAL_IN_PROGRESS,
+            current_stage="defence_opening",
+            current_speaker="defense",
+            current_witness_id=None,
+            current_round=1,
+            total_rounds=case.total_rounds,
+            is_completed=False,
+            new_argument=new_arg_obj,
+            courtroom_event=evt,
+            next_action_prompt="Defense Opening Statement",
+            audit_event="PROSECUTION_OPENING_RECORDED",
+        )
+
+    # 3. DEFENCE OPENING STATEMENT
+    elif current_stage == "defence_opening":
+        raw_res = defense.generate_opening()
+        arg_text = raw_res.get("argument") or "The Defense submits that the State's circumstantial claims fail the standard of proof beyond reasonable doubt under BSA §104."
+        new_arg_obj = Argument(
+            case_id=case.id,
+            round_number=1,
+            speaker=Speaker.DEFENSE,
+            stage_type="defence_opening",
+            content=arg_text,
+            argument_type="opening_statement",
+            argument_strength="strong",
+            legal_basis="Presumption of Innocence & BSA §104",
+            party_statement_ref="Defense Opening",
+            evidence_references=raw_res.get("evidence_references", ["Fact #3", "Fact #5"]),
+        )
+        database.save_argument_record(new_arg_obj)
+
+        evt = database.save_courtroom_event(
+            case.id,
+            stage="defence_opening",
+            event_type="OPENING_DELIVERED",
+            speaker="defense",
+            content=arg_text,
+        )
+
         # Transition to Prosecution Evidence: determine first witness (PW-01)
         pros_witnesses = [w for w in case.witnesses_list if w.called_by == "prosecution"]
         first_w_id = pros_witnesses[0].id if pros_witnesses else None
@@ -287,7 +336,7 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
         conn.close()
 
         if first_w_id:
-            database.update_witness_status(first_w_id, "on_stand")
+            database.update_witness_status(first_w_id, "on_stand", case_id=case.id)
 
         return NextTurnResponse(
             case_id=case.id,
@@ -301,16 +350,16 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             new_argument=new_arg_obj,
             courtroom_event=evt,
             next_action_prompt=f"Prosecution calls witness {first_w_id or 'PW-01'} to the stand",
-            audit_event="PROSECUTION_OPENING_RECORDED",
+            audit_event="DEFENCE_OPENING_RECORDED",
         )
 
-    # 3. PROSECUTION EVIDENCE (Witness Examination)
+    # 4. PROSECUTION EVIDENCE (Witness Examination)
     elif current_stage == "prosecution_evidence":
         witness_id = case.current_witness_id
         witness = next((w for w in case.witnesses_list if w.id == witness_id), None)
 
         if not witness and case.witnesses_list:
-            pros_w = [w for w in case.witnesses_list if w.called_by == "prosecution"]
+            pros_w = [w for w in case.witnesses_list if w.called_by == "prosecution" and w.status != "discharged"]
             witness = pros_w[0] if pros_w else case.witnesses_list[0]
             witness_id = witness.id
 
@@ -319,18 +368,19 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             conn = database.get_db_connection()
             with conn:
                 conn.execute(
-                    "UPDATE cases SET current_stage = 'closing_prosecution', current_speaker = 'prosecution', updated_at = ? WHERE id = ?",
+                    "UPDATE cases SET current_stage = 'closing_prosecution', current_speaker = 'prosecution', current_witness_id = NULL, updated_at = ? WHERE id = ?",
                     (datetime.datetime.utcnow().isoformat(), case.id),
                 )
             conn.close()
             return execute_next_turn(case_id)
 
         w_turns = witness.testimony_turns or []
-        turn_count = len(w_turns)
+        direct_turns = [t for t in w_turns if t.get("stage") == "examination_in_chief"]
+        cross_turns = [t for t in w_turns if t.get("stage") == "cross_examination"]
 
-        # Examination-in-Chief turns: turns 0, 1
-        if turn_count < 2:
-            q_num = turn_count + 1
+        # Direct Examination: 3 questions
+        if len(direct_turns) < 3:
+            q_num = len(direct_turns) + 1
             raw_q = prosecution.generate_examination_question(
                 witness_name=witness.name,
                 witness_role=witness.role,
@@ -338,7 +388,7 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                 question_num=q_num,
                 prior_qa_list=w_turns,
             )
-            q_text = raw_q.get("question", f"Please state your role and observation regarding the incident.")
+            q_text = raw_q.get("question", f"Please describe what you observed during the material timeline.")
 
             # Witness answers strictly from their record
             w_agent = WitnessAgent(
@@ -358,16 +408,16 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                 question=q_text,
                 prior_testimony_summary="\n".join([f"Q: {t.get('question')}\nA: {t.get('answer')}" for t in w_turns]),
             )
-            ans_text = raw_ans.get("answer", "I accessed the system and confirmed the timestamps recorded in the logs.")
+            ans_text = raw_ans.get("answer", "I testify strictly based on the observations and facts on record.")
 
             turn_record = {
-                "turn": q_num,
+                "turn": len(w_turns) + 1,
                 "counsel": "prosecution",
                 "stage": "examination_in_chief",
                 "question": q_text,
                 "answer": ans_text,
             }
-            database.update_witness_status(witness.id, "on_stand", turn_record=turn_record)
+            database.update_witness_status(witness.id, "on_stand", turn_record=turn_record, case_id=case.id)
 
             evt = database.save_courtroom_event(
                 case.id,
@@ -375,14 +425,26 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                 event_type="EXAMINATION_QUESTION_ANSWER",
                 speaker="prosecution",
                 witness_id=witness.id,
-                content=f"🔴 Q ({q_num}): {q_text}\n\n👤 {witness.name} ({witness.id}): \"{ans_text}\"",
-                question_turn=q_num,
+                content=f"🔴 Direct Q ({q_num}/3): {q_text}\n\n👤 {witness.name} ({witness.id}): \"{ans_text}\"",
+                question_turn=len(w_turns) + 1,
             )
 
-            # Auto-introduce linked exhibit if available on Q1
+            # Auto-introduce linked exhibits
             if q_num == 1 and witness.linked_evidence_ids:
                 ex_id = witness.linked_evidence_ids[0]
-                database.update_evidence_status(ex_id, "admitted")
+                database.update_evidence_status(ex_id, "admitted", case_id=case.id)
+                database.save_courtroom_event(
+                    case.id,
+                    stage="prosecution_evidence",
+                    event_type="EVIDENCE_ADMITTED",
+                    speaker="judge",
+                    content=f"Exhibit {ex_id} offered by Prosecution is formally marked and admitted into evidence.",
+                    evidence_id=ex_id,
+                    evidence_action="admitted",
+                )
+            elif q_num == 2 and len(witness.linked_evidence_ids) > 1:
+                ex_id = witness.linked_evidence_ids[1]
+                database.update_evidence_status(ex_id, "admitted", case_id=case.id)
                 database.save_courtroom_event(
                     case.id,
                     stage="prosecution_evidence",
@@ -393,29 +455,41 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                     evidence_action="admitted",
                 )
 
+            next_spk = "prosecution" if q_num < 3 else "defense"
+            next_prompt = f"Next Examination Question ({q_num + 1}/3)" if q_num < 3 else "Proceed to Cross-Examination (1/3)"
+
+            conn = database.get_db_connection()
+            with conn:
+                conn.execute(
+                    "UPDATE cases SET current_stage = 'prosecution_evidence', current_speaker = ?, current_witness_id = ?, updated_at = ? WHERE id = ?",
+                    (next_spk, witness.id, datetime.datetime.utcnow().isoformat(), case.id),
+                )
+            conn.close()
+
             return NextTurnResponse(
                 case_id=case.id,
                 status=CaseStatus.TRIAL_IN_PROGRESS,
                 current_stage="prosecution_evidence",
-                current_speaker="defense" if q_num == 2 else "prosecution",
+                current_speaker=next_spk,
                 current_witness_id=witness.id,
                 current_round=1,
                 total_rounds=case.total_rounds,
                 is_completed=False,
                 courtroom_event=evt,
-                next_action_prompt="Proceed to Cross-Examination" if q_num == 2 else f"Next Examination Question ({q_num + 1})",
+                next_action_prompt=next_prompt,
                 audit_event=f"WITNESS_EXAMINED_{witness.id}_Q{q_num}",
             )
 
-        # Cross-Examination turn: turn 2
-        elif turn_count == 2:
+        # Cross-Examination turns: 3 questions
+        elif len(cross_turns) < 3:
+            cross_num = len(cross_turns) + 1
             raw_cross = defense.generate_cross_question(
                 witness_name=witness.name,
                 witness_role=witness.role,
                 prior_testimony_summary="\n".join([f"Q: {t.get('question')}\nA: {t.get('answer')}" for t in w_turns]),
-                question_num=1,
+                question_num=cross_num,
             )
-            cross_q = raw_cross.get("question", "You did not personally witness anyone physically removing the property, correct?")
+            cross_q = raw_cross.get("question", "You did not personally witness the physical act without ambiguity, correct?")
 
             w_agent = WitnessAgent(
                 case_title=case.title,
@@ -434,16 +508,16 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                 question=cross_q,
                 prior_testimony_summary="\n".join([f"Q: {t.get('question')}\nA: {t.get('answer')}" for t in w_turns]),
             )
-            ans_text = raw_ans.get("answer", "No, I can only testify to what is reflected in the automated electronic records.")
+            ans_text = raw_ans.get("answer", "I can only speak directly to what is within my knowledge and records.")
 
             turn_record = {
-                "turn": 3,
+                "turn": len(w_turns) + 1,
                 "counsel": "defense",
                 "stage": "cross_examination",
                 "question": cross_q,
                 "answer": ans_text,
             }
-            database.update_witness_status(witness.id, "examined", turn_record=turn_record)
+            database.update_witness_status(witness.id, "on_stand", turn_record=turn_record, case_id=case.id)
 
             evt = database.save_courtroom_event(
                 case.id,
@@ -451,72 +525,102 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                 event_type="CROSS_EXAMINATION_ANSWER",
                 speaker="defense",
                 witness_id=witness.id,
-                content=f"🔵 Cross Q (1): {cross_q}\n\n👤 {witness.name} ({witness.id}): \"{ans_text}\"",
-                question_turn=3,
+                content=f"🔵 Cross Q ({cross_num}/3): {cross_q}\n\n👤 {witness.name} ({witness.id}): \"{ans_text}\"",
+                question_turn=len(w_turns) + 1,
             )
 
-            # Discharge witness and advance to Defence Evidence or Closings
-            database.update_witness_status(witness.id, "discharged")
-            database.save_courtroom_event(
-                case.id,
-                stage="prosecution_evidence",
-                event_type="WITNESS_DISCHARGED",
-                speaker="judge",
-                witness_id=witness.id,
-                content=f"Witness {witness.name} ({witness.id}) is discharged from the stand. Prosecution rests its evidence.",
-            )
+            # Check if this witness completed all 3 cross questions
+            if cross_num >= 3:
+                database.update_witness_status(witness.id, "discharged", case_id=case.id)
+                database.save_courtroom_event(
+                    case.id,
+                    stage="prosecution_evidence",
+                    event_type="WITNESS_DISCHARGED",
+                    speaker="judge",
+                    witness_id=witness.id,
+                    content=f"Witness {witness.name} ({witness.id}) is discharged from the stand. Prosecution rests on this witness.",
+                )
 
-            # Check if there is defense witness (DW-01)
-            def_witnesses = [w for w in case.witnesses_list if w.called_by == "defense"]
-            if def_witnesses:
-                next_stage = "defence_evidence"
-                next_speaker = "defense"
-                next_w_id = def_witnesses[0].id
-                database.update_witness_status(next_w_id, "on_stand")
-                prompt_msg = f"Defence calls witness {next_w_id} ({def_witnesses[0].name})"
-            else:
-                next_stage = "closing_prosecution"
-                next_speaker = "prosecution"
-                next_w_id = None
-                prompt_msg = "Prosecution Closing Arguments"
+                # Check if there is another unexamined prosecution witness (e.g. PW-02)
+                unexamined_pros = [w for w in case.witnesses_list if w.called_by == "prosecution" and w.id != witness.id and w.status != "discharged"]
+                if unexamined_pros:
+                    next_w_id = unexamined_pros[0].id
+                    database.update_witness_status(next_w_id, "on_stand", case_id=case.id)
+                    next_stage = "prosecution_evidence"
+                    next_speaker = "prosecution"
+                    prompt_msg = f"Prosecution calls {next_w_id} ({unexamined_pros[0].name})"
+                else:
+                    # Check for defense witness
+                    def_witnesses = [w for w in case.witnesses_list if w.called_by == "defense" and w.status != "discharged"]
+                    if def_witnesses:
+                        next_stage = "defence_evidence"
+                        next_speaker = "defense"
+                        next_w_id = def_witnesses[0].id
+                        database.update_witness_status(next_w_id, "on_stand", case_id=case.id)
+                        prompt_msg = f"Defence calls witness {next_w_id} ({def_witnesses[0].name})"
+                    else:
+                        next_stage = "closing_prosecution"
+                        next_speaker = "prosecution"
+                        next_w_id = None
+                        prompt_msg = "Prosecution Closing Arguments"
+
+                conn = database.get_db_connection()
+                with conn:
+                    conn.execute(
+                        "UPDATE cases SET current_stage = ?, current_speaker = ?, current_witness_id = ?, updated_at = ? WHERE id = ?",
+                        (next_stage, next_speaker, next_w_id, datetime.datetime.utcnow().isoformat(), case.id),
+                    )
+                conn.close()
+
+                return NextTurnResponse(
+                    case_id=case.id,
+                    status=CaseStatus.TRIAL_IN_PROGRESS,
+                    current_stage=next_stage,
+                    current_speaker=next_speaker,
+                    current_witness_id=next_w_id,
+                    current_round=1,
+                    total_rounds=case.total_rounds,
+                    is_completed=False,
+                    courtroom_event=evt,
+                    next_action_prompt=prompt_msg,
+                    audit_event=f"WITNESS_DISCHARGED_{witness.id}",
+                )
 
             conn = database.get_db_connection()
             with conn:
                 conn.execute(
-                    "UPDATE cases SET current_stage = ?, current_speaker = ?, current_witness_id = ?, updated_at = ? WHERE id = ?",
-                    (next_stage, next_speaker, next_w_id, datetime.datetime.utcnow().isoformat(), case.id),
+                    "UPDATE cases SET current_stage = 'prosecution_evidence', current_speaker = 'defense', current_witness_id = ?, updated_at = ? WHERE id = ?",
+                    (witness.id, datetime.datetime.utcnow().isoformat(), case.id),
                 )
             conn.close()
 
             return NextTurnResponse(
                 case_id=case.id,
                 status=CaseStatus.TRIAL_IN_PROGRESS,
-                current_stage=next_stage,
-                current_speaker=next_speaker,
-                current_witness_id=next_w_id,
+                current_stage="prosecution_evidence",
+                current_speaker="defense",
+                current_witness_id=witness.id,
                 current_round=1,
                 total_rounds=case.total_rounds,
                 is_completed=False,
                 courtroom_event=evt,
-                next_action_prompt=prompt_msg,
-                audit_event=f"WITNESS_DISCHARGED_{witness.id}",
+                next_action_prompt=f"Next Cross-Examination Question ({cross_num + 1}/3)",
+                audit_event=f"WITNESS_CROSS_EXAMINED_{witness.id}_Q{cross_num}",
             )
 
         else:
-            # All turns completed for this prosecution witness
-            database.update_witness_status(witness.id, "discharged")
-            def_witnesses = [w for w in case.witnesses_list if w.called_by == "defense"]
+            # Witness already fully examined
+            database.update_witness_status(witness.id, "discharged", case_id=case.id)
+            def_witnesses = [w for w in case.witnesses_list if w.called_by == "defense" and w.status != "discharged"]
             if def_witnesses:
                 next_stage = "defence_evidence"
                 next_speaker = "defense"
                 next_w_id = def_witnesses[0].id
-                database.update_witness_status(next_w_id, "on_stand")
-                prompt_msg = f"Defence calls witness {next_w_id} ({def_witnesses[0].name})"
+                database.update_witness_status(next_w_id, "on_stand", case_id=case.id)
             else:
                 next_stage = "closing_prosecution"
                 next_speaker = "prosecution"
                 next_w_id = None
-                prompt_msg = "Prosecution Closing Arguments"
 
             conn = database.get_db_connection()
             with conn:
@@ -525,10 +629,9 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                     (next_stage, next_speaker, next_w_id, datetime.datetime.utcnow().isoformat(), case.id),
                 )
             conn.close()
-
             return execute_next_turn(case_id)
 
-    # 4. DEFENCE EVIDENCE
+    # 5. DEFENCE EVIDENCE (Defence Witness Examination & Cross-Examination)
     elif current_stage == "defence_evidence":
         witness_id = case.current_witness_id
         witness = next((w for w in case.witnesses_list if w.id == witness_id), None)
@@ -543,14 +646,20 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             return execute_next_turn(case_id)
 
         w_turns = witness.testimony_turns or []
-        if len(w_turns) == 0:
+        direct_turns = [t for t in w_turns if t.get("stage") == "examination_in_chief"]
+        cross_turns = [t for t in w_turns if t.get("stage") == "cross_examination"]
+
+        # Defence Direct Examination: 3 questions
+        if len(direct_turns) < 3:
+            q_num = len(direct_turns) + 1
             raw_q = defense.generate_examination_question(
                 witness_name=witness.name,
                 witness_role=witness.role,
                 expected_testimony=witness.expected_testimony,
-                question_num=1,
+                question_num=q_num,
+                prior_qa_list=w_turns,
             )
-            q_text = raw_q.get("question", "Can you explain the official purpose of the documentation review on that evening?")
+            q_text = raw_q.get("question", "Please clarify the defense position and critical timeline facts.")
 
             w_agent = WitnessAgent(
                 case_title=case.title,
@@ -567,18 +676,18 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                 examining_counsel="defense",
                 examination_type="examination_in_chief",
                 question=q_text,
+                prior_testimony_summary="\n".join([f"Q: {t.get('question')}\nA: {t.get('answer')}" for t in w_turns]),
             )
-            ans_text = raw_ans.get("answer", "Yes, the accused was assigned to retrieve technical documentation for the upcoming sprint.")
+            ans_text = raw_ans.get("answer", "I confirm the facts and circumstances as stated.")
 
             turn_record = {
-                "turn": 1,
+                "turn": len(w_turns) + 1,
                 "counsel": "defense",
                 "stage": "examination_in_chief",
                 "question": q_text,
                 "answer": ans_text,
             }
-            database.update_witness_status(witness.id, "examined", turn_record=turn_record)
-            database.update_witness_status(witness.id, "discharged")
+            database.update_witness_status(witness.id, "on_stand", turn_record=turn_record, case_id=case.id)
 
             evt = database.save_courtroom_event(
                 case.id,
@@ -586,34 +695,158 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                 event_type="DEFENCE_WITNESS_EXAMINED",
                 speaker="defense",
                 witness_id=witness.id,
-                content=f"🔵 Direct Q (1): {q_text}\n\n👤 {witness.name} ({witness.id}): \"{ans_text}\"",
+                content=f"🔵 Direct Q ({q_num}/3): {q_text}\n\n👤 {witness.name} ({witness.id}): \"{ans_text}\"",
+                question_turn=len(w_turns) + 1,
             )
 
-            # Transition to closing arguments
+            # Auto-introduce defense exhibit if available
+            if q_num == 1 and witness.linked_evidence_ids:
+                ex_id = witness.linked_evidence_ids[0]
+                database.update_evidence_status(ex_id, "admitted", case_id=case.id)
+                database.save_courtroom_event(
+                    case.id,
+                    stage="defence_evidence",
+                    event_type="EVIDENCE_ADMITTED",
+                    speaker="judge",
+                    content=f"Exhibit {ex_id} offered by Defense is formally marked and admitted into evidence.",
+                    evidence_id=ex_id,
+                    evidence_action="admitted",
+                )
+
+            next_spk = "defense" if q_num < 3 else "prosecution"
+            next_prompt = f"Next Defence Direct ({q_num + 1}/3)" if q_num < 3 else "Prosecution Cross-Examination (1/3)"
+
             conn = database.get_db_connection()
             with conn:
                 conn.execute(
-                    "UPDATE cases SET current_stage = 'closing_prosecution', current_speaker = 'prosecution', current_witness_id = NULL, updated_at = ? WHERE id = ?",
-                    (datetime.datetime.utcnow().isoformat(), case.id),
+                    "UPDATE cases SET current_stage = 'defence_evidence', current_speaker = ?, current_witness_id = ?, updated_at = ? WHERE id = ?",
+                    (next_spk, witness.id, datetime.datetime.utcnow().isoformat(), case.id),
                 )
             conn.close()
 
             return NextTurnResponse(
                 case_id=case.id,
                 status=CaseStatus.TRIAL_IN_PROGRESS,
-                current_stage="closing_prosecution",
-                current_speaker="prosecution",
-                current_witness_id=None,
+                current_stage="defence_evidence",
+                current_speaker=next_spk,
+                current_witness_id=witness.id,
                 current_round=case.total_rounds,
                 total_rounds=case.total_rounds,
                 is_completed=False,
                 courtroom_event=evt,
-                next_action_prompt="Prosecution Closing Arguments",
-                audit_event="DEFENCE_EVIDENCE_CONCLUDED",
+                next_action_prompt=next_prompt,
+                audit_event=f"DEFENCE_WITNESS_EXAMINED_Q{q_num}",
             )
+
+        # Prosecution Cross-Examination of Defense Witness: 3 questions
+        elif len(cross_turns) < 3:
+            cross_num = len(cross_turns) + 1
+            raw_cross = prosecution.generate_cross_question(
+                witness_name=witness.name,
+                witness_role=witness.role,
+                prior_testimony_summary="\n".join([f"Q: {t.get('question')}\nA: {t.get('answer')}" for t in w_turns]),
+                question_num=cross_num,
+            )
+            cross_q = raw_cross.get("question", "Isn't it true you did not independently verify the documentation yourself?")
+
+            w_agent = WitnessAgent(
+                case_title=case.title,
+                canonical_facts=case.facts,
+                witness_id=witness.id,
+                witness_name=witness.name,
+                role=witness.role,
+                connection_to_case=witness.connection_to_case,
+                expected_testimony=witness.expected_testimony,
+                linked_facts=[f"Fact #{idx}" for idx in witness.linked_fact_indices],
+                linked_exhibits=witness.linked_evidence_ids,
+            )
+            raw_ans = w_agent.answer_question(
+                examining_counsel="prosecution",
+                examination_type="cross_examination",
+                question=cross_q,
+                prior_testimony_summary="\n".join([f"Q: {t.get('question')}\nA: {t.get('answer')}" for t in w_turns]),
+            )
+            ans_text = raw_ans.get("answer", "I acted strictly within the scope of my routine responsibilities.")
+
+            turn_record = {
+                "turn": len(w_turns) + 1,
+                "counsel": "prosecution",
+                "stage": "cross_examination",
+                "question": cross_q,
+                "answer": ans_text,
+            }
+            database.update_witness_status(witness.id, "on_stand", turn_record=turn_record, case_id=case.id)
+
+            evt = database.save_courtroom_event(
+                case.id,
+                stage="defence_evidence",
+                event_type="DEFENCE_WITNESS_CROSS_EXAMINED",
+                speaker="prosecution",
+                witness_id=witness.id,
+                content=f"🔴 Cross Q ({cross_num}/3): {cross_q}\n\n👤 {witness.name} ({witness.id}): \"{ans_text}\"",
+                question_turn=len(w_turns) + 1,
+            )
+
+            # If cross-examination reached 3 questions, discharge witness
+            if cross_num >= 3:
+                database.update_witness_status(witness.id, "discharged", case_id=case.id)
+                database.save_courtroom_event(
+                    case.id,
+                    stage="defence_evidence",
+                    event_type="WITNESS_DISCHARGED",
+                    speaker="judge",
+                    witness_id=witness.id,
+                    content=f"Defense Witness {witness.name} ({witness.id}) is discharged from the stand. Evidentiary stage concluded.",
+                )
+
+                # Move to Closing Arguments
+                conn = database.get_db_connection()
+                with conn:
+                    conn.execute(
+                        "UPDATE cases SET current_stage = 'closing_prosecution', current_speaker = 'prosecution', current_witness_id = NULL, updated_at = ? WHERE id = ?",
+                        (datetime.datetime.utcnow().isoformat(), case.id),
+                    )
+                conn.close()
+
+                return NextTurnResponse(
+                    case_id=case.id,
+                    status=CaseStatus.TRIAL_IN_PROGRESS,
+                    current_stage="closing_prosecution",
+                    current_speaker="prosecution",
+                    current_witness_id=None,
+                    current_round=case.total_rounds,
+                    total_rounds=case.total_rounds,
+                    is_completed=False,
+                    courtroom_event=evt,
+                    next_action_prompt="Prosecution Closing Arguments",
+                    audit_event="DEFENCE_EVIDENCE_CONCLUDED",
+                )
+
+            conn = database.get_db_connection()
+            with conn:
+                conn.execute(
+                    "UPDATE cases SET current_stage = 'defence_evidence', current_speaker = 'prosecution', current_witness_id = ?, updated_at = ? WHERE id = ?",
+                    (witness.id, datetime.datetime.utcnow().isoformat(), case.id),
+                )
+            conn.close()
+
+            return NextTurnResponse(
+                case_id=case.id,
+                status=CaseStatus.TRIAL_IN_PROGRESS,
+                current_stage="defence_evidence",
+                current_speaker="prosecution",
+                current_witness_id=witness.id,
+                current_round=case.total_rounds,
+                total_rounds=case.total_rounds,
+                is_completed=False,
+                courtroom_event=evt,
+                next_action_prompt=f"Next Prosecution Cross ({cross_num + 1}/3)",
+                audit_event=f"DEFENCE_WITNESS_CROSS_EXAMINED_Q{cross_num}",
+            )
+
         else:
             # Defence witness already examined -> move to closing
-            database.update_witness_status(witness.id, "discharged")
+            database.update_witness_status(witness.id, "discharged", case_id=case.id)
             conn = database.get_db_connection()
             with conn:
                 conn.execute(

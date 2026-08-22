@@ -248,10 +248,19 @@ class BaseCourtroomAgent:
                     "overall_determination": p2_match.group(1).strip()
                 }
 
+        # Check if text is an LLM refusal / safety apology
+        is_refusal = any(phrase in (cleaned or "").lower() for phrase in [
+            "i'm sorry, but i can't", "i cannot fulfill", "as an ai", "i am unable to", "i can't fulfill", "i apologize"
+        ])
+        if is_refusal:
+            result = {}
+
         # Ensure essential defaults are present for all courtroom contexts
-        if not result.get("argument"):
+        if not result.get("argument") or is_refusal:
             result["argument"] = "Counsel submits that the evidence on record and statutory provisions under Bharatiya Nyaya Sanhita and Bharatiya Sakshya Adhiniyam govern this matter."
-        if not result.get("answer"):
+        if not result.get("question") or is_refusal:
+            result["question"] = "Please state your direct observations regarding the events and timeline in question."
+        if not result.get("answer") or is_refusal:
             result["answer"] = "I testify strictly based on the observations and records available to me."
         if not result.get("winner"):
             result["winner"] = "defense_prevailed"

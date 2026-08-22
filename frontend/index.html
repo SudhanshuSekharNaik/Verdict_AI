@@ -4171,16 +4171,28 @@
           </div>
 
           <!-- Audience Passive Stream Banner (Audience Mode Only) -->
-          <div id="crtAudienceBanner" style="display:none; background:rgba(212,160,23,0.08); border:1px solid var(--brass); border-radius:6px; padding:12px 16px; margin-top:16px; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-size:18px;">👁️</span>
-              <div>
-                <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:700; color:var(--brass-bright); letter-spacing:1px; text-transform:uppercase;">AUDIENCE BROADCAST · FULLY AUTONOMOUS TRIAL</div>
-                <div style="font-size:11.5px; color:var(--paper-dim);">Arguments, witness examinations, and judicial decree unfold sequentially on their own. Pure observation mode.</div>
+          <div id="crtAudienceBanner" style="display:none; background:rgba(212,160,23,0.08); border:1px solid var(--brass); border-radius:6px; padding:12px 16px; margin-top:16px; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; width:100%;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:18px;">👁️</span>
+                <div>
+                  <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:700; color:var(--brass-bright); letter-spacing:1px; text-transform:uppercase;">AUDIENCE BROADCAST · FULLY AUTONOMOUS TRIAL</div>
+                  <div style="font-size:11.5px; color:var(--paper-dim);">Arguments, witness examinations, and judicial decree unfold sequentially on their own. Pure observation mode.</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="status-badge" style="background:#2d1b1f; color:var(--prosecution-accent); border:1px solid var(--prosecution); font-size:9.5px; letter-spacing:1px;">● LIVE STREAM</span>
               </div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span class="status-badge" style="background:#2d1b1f; color:var(--prosecution-accent); border:1px solid var(--prosecution); font-size:9.5px; letter-spacing:1px;">● LIVE STREAM</span>
+            <!-- Dynamic Reading Pacing Bar -->
+            <div style="width:100%; margin-top:2px;">
+              <div style="display:flex; justify-content:space-between; font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--brass); margin-bottom:4px;">
+                <span id="crtAudienceTimerLabel">Pacing ~8s to read statements · Next turn advancing...</span>
+                <span>AUDIENCE PACING</span>
+              </div>
+              <div style="width:100%; height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;">
+                <div id="crtAudienceTimerBar" style="width:0%; height:100%; background:var(--brass-bright); border-radius:2px; transition:width 8000ms linear;"></div>
+              </div>
             </div>
           </div>
 
@@ -5707,26 +5719,57 @@ async function startAudienceTrialFromBriefing() {
         charge_or_dispute: tmpl.charge,
         facts: tmpl.facts,
         counsel_filing_id: "agent_02",
-        counsel_opposing_id: "agent_01"
+        counsel_opposing_id: "agent_01",
+        total_rounds: 3
       })
     });
     const newCase = await createRes.json();
     activeCaseId = newCase.id;
 
-    // 2. Start trial
+    // 2. Register Template Exhibits & Evidence
+    if (tmpl.evidenceList && Array.isArray(tmpl.evidenceList) && tmpl.evidenceList.length > 0) {
+      for (const ev of tmpl.evidenceList) {
+        try {
+          await fetch(`${API_BASE}/api/cases/${newCase.id}/evidence`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(ev)
+          });
+        } catch (e) {
+          console.warn("Evidence seed error:", e);
+        }
+      }
+    }
+
+    // 3. Register Template Witnesses
+    if (tmpl.witnessList && Array.isArray(tmpl.witnessList) && tmpl.witnessList.length > 0) {
+      for (const w of tmpl.witnessList) {
+        try {
+          await fetch(`${API_BASE}/api/cases/${newCase.id}/witnesses`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(w)
+          });
+        } catch (e) {
+          console.warn("Witness seed error:", e);
+        }
+      }
+    }
+
+    // 4. Start trial
     await fetch(`${API_BASE}/api/cases/${newCase.id}/trial/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" }
     });
 
-    // 3. Load case into courtroom
+    // 5. Load complete case into courtroom
     const caseRes = await fetch(`${API_BASE}/api/cases/${newCase.id}`);
     currentCaseData = await caseRes.json();
     
     renderCourtroomArena(currentCaseData);
     showView('courtroom');
     
-    // 4. Run Countdown Start Sequence (3, 2, 1) -> Judge Opening Beat -> Autonomous Playback
+    // 6. Run Countdown Start Sequence (3, 2, 1) -> Judge Opening Beat -> Autonomous Playback
     runCourtroomCountdown(currentCaseData);
   } catch (err) {
     console.error("Failed to launch audience trial:", err);
@@ -5810,10 +5853,9 @@ function renderCourtOpeningBeat(c) {
     speakText(crtActiveTurnText);
   }
 
-  // Start autonomous playback pacing after brief initial opening pause
-  setTimeout(() => {
-    startAudienceAutonomousPlayback();
-  }, 2400);
+  // Start autonomous playback pacing after giving full time to read Judge opening beat
+  const openingDelay = getTurnReadingDelay(crtActiveTurnText);
+  scheduleNextAudienceStep(openingDelay);
 }
 
 function openEnterCourtChoiceModal() {
@@ -7473,11 +7515,58 @@ function renderCourtroomArena(c) {
   renderRightMaterialsTabs(c);
 }
 
+function getTurnReadingDelay(text) {
+  if (!text) return 8500;
+  // Calculate comfortable reading delay: ~50-55ms per char, min 8.5s, max 16s
+  const lengthBased = (text || '').length * 52;
+  return Math.max(8500, Math.min(16000, lengthBased));
+}
+
 function stopAudienceAutonomousPlayback() {
   if (audiencePlaybackTimer) {
+    clearTimeout(audiencePlaybackTimer);
     clearInterval(audiencePlaybackTimer);
     audiencePlaybackTimer = null;
   }
+}
+
+function scheduleNextAudienceStep(delayMs) {
+  stopAudienceAutonomousPlayback();
+  if (!isAudienceMode || !activeCaseId) return;
+
+  const bar = document.getElementById("crtAudienceTimerBar");
+  const timeLabel = document.getElementById("crtAudienceTimerLabel");
+  if (bar) {
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    setTimeout(() => {
+      bar.style.transition = `width ${delayMs}ms linear`;
+      bar.style.width = '100%';
+    }, 40);
+  }
+  if (timeLabel) {
+    const sec = Math.round(delayMs / 1000);
+    timeLabel.innerText = `Pacing ~${sec}s to read statements · Next turn advancing...`;
+  }
+
+  audiencePlaybackTimer = setTimeout(async () => {
+    if (!isAudienceMode || !activeCaseId) return;
+
+    // If speech synthesis is speaking, wait until it completes plus a reading grace period
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      const checkSpeechTimer = setInterval(async () => {
+        if (!window.speechSynthesis || !window.speechSynthesis.speaking) {
+          clearInterval(checkSpeechTimer);
+          setTimeout(async () => {
+            await stepAudienceTrial();
+          }, 1600);
+        }
+      }, 400);
+      return;
+    }
+
+    await stepAudienceTrial();
+  }, delayMs);
 }
 
 function startAudienceAutonomousPlayback() {
@@ -7492,32 +7581,8 @@ function startAudienceAutonomousPlayback() {
     return;
   }
 
-  // Step immediately after initial render
-  setTimeout(async () => {
-    if (isAudienceMode && currentCaseData && currentCaseData.status !== 'resolved') {
-      await stepAudienceTrial();
-    }
-  }, 750);
-
-  // Paced interval: 2600ms per step
-  audiencePlaybackTimer = setInterval(async () => {
-    if (!isAudienceMode || !activeCaseId) {
-      stopAudienceAutonomousPlayback();
-      return;
-    }
-    // If speech is speaking, wait for audio narration
-    if (window.speechSynthesis && window.speechSynthesis.speaking) {
-      return;
-    }
-    if (currentCaseData && currentCaseData.status === 'resolved') {
-      stopAudienceAutonomousPlayback();
-      if (currentCaseData.verdict) {
-        showCinematicVerdictModal(currentCaseData.verdict);
-      }
-      return;
-    }
-    await stepAudienceTrial();
-  }, 2600);
+  const initialDelay = getTurnReadingDelay(crtActiveTurnText);
+  scheduleNextAudienceStep(initialDelay);
 }
 
 async function stepAudienceTrial() {
@@ -7533,18 +7598,26 @@ async function stepAudienceTrial() {
     currentCaseData = await caseRes.json();
     renderCourtroomArena(currentCaseData);
 
+    const activeText = crtActiveTurnText || (turnData.courtroom_event && turnData.courtroom_event.content) || "";
+    if (activeText && isAudioPlaying) {
+      speakText(activeText);
+    }
+
     if (currentCaseData.status === 'resolved') {
       stopAudienceAutonomousPlayback();
+      const timeLabel = document.getElementById("crtAudienceTimerLabel");
+      if (timeLabel) timeLabel.innerText = "Trial Concluded · Final Judicial Decree rendered.";
       setTimeout(() => {
         if (currentCaseData.verdict) {
           showCinematicVerdictModal(currentCaseData.verdict);
         }
-      }, 700);
+      }, 4500);
+      return;
     }
 
-    if (turnData.courtroom_event && isAudioPlaying) {
-      speakText(crtActiveTurnText || turnData.courtroom_event.content);
-    }
+    // Schedule next turn with calculated comfortable reading delay
+    const delay = getTurnReadingDelay(activeText);
+    scheduleNextAudienceStep(delay);
   } catch (err) {
     console.error("Audience autoplay error:", err);
     stopAudienceAutonomousPlayback();
