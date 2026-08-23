@@ -1,40 +1,64 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-
-# Environments & Virtual Envs
-venv/
-env/
-ENV/
-.venv/
-node_modules/
+*.egg-info/
 dist/
 build/
+*.egg
+.eggs/
 
-# Environment Variables & Secrets (CRITICAL)
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Environment
 .env
 .env.local
-.env.*.local
-*.env
 
-# Databases & Local Logs
-*.db
-*.sqlite
-*.sqlite3
-backend/courtroom.db
-*.log
-
-# Testing & Coverage
-.pytest_cache/
-.coverage
-htmlcov/
-test-results/
-playwright-report/
-
-# IDE & OS Specific
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Node
+node_modules/
+.next/
+out/
+
+# Database
+*.db
+*.sqlite3
+
+# ML Artifacts
+training/output/
+models/*.bin
+models/*.pt
+models/*.onnx
+*.pkl
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Data
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Temp
+tmp/
+temp/
+*.tmp

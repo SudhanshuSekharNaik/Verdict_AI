@@ -1,0 +1,26 @@
+{
+  "case_id": "AAD-2026-001",
+  "known_facts": [
+    "Tenant paid ₹50,000 refundable security deposit on 01 July 2024 via NEFT.",
+    "Tenancy lease expired on 30 June 2025 and tenant surrendered keys.",
+    "Landlord withheld ₹35,000 citing repair and painting costs.",
+    "Move-out inspection by landlord occurred 12 days after tenant vacated without tenant present."
+  ],
+  "known_contradictions": [
+    {
+      "source_a": "Tenant Move-Out Photos (30 June 2025)",
+      "source_b": "Landlord Damage Inspection (12 July 2025)",
+      "contradiction_type": "TIMELINE_CONFLICT",
+      "explanation": "Tenant photos taken at the moment of key surrender prove undamaged walls. Landlord inspection occurred 12 days later during which third parties had unmonitored access."
+    }
+  ],
+  "expected_legal_issues": [
+    "Whether unilateral deduction of security deposit without contemporaneous joint inspection is lawful.",
+    "Whether landlord discharged burden of proving tenant-induced damage beyond ordinary wear and tear."
+  ],
+  "expected_verdict": "PLAINTIFF_SUCCEEDS",
+  "benchmark_metrics": {
+    "expected_ner_entities": 8,
+    "expected_nli_contradiction_pairs": 1
+  }
+}

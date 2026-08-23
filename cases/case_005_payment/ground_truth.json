@@ -1,0 +1,16 @@
+{
+  "case_id": "AAD-2026-005",
+  "known_facts": [
+    "Client paid ₹1,20,000 against milestone-based custom software scope.",
+    "Studio failed to deliver source code and claimed payment was non-refundable."
+  ],
+  "known_contradictions": [
+    {
+      "source_a": "Milestone Agreement Email",
+      "source_b": "Agency Defence Claim 'Non-Refundable Retainer'",
+      "contradiction_type": "FACTUAL_CONTRADICTION",
+      "explanation": "Contract specifies milestone-based delivery with code handoff, contradicting agency's claim of unconditioned retainer."
+    }
+  ],
+  "expected_verdict": "PLAINTIFF_SUCCEEDS"
+}

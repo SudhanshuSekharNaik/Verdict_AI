@@ -1,0 +1,17 @@
+{
+  "case_id": "AAD-2026-003",
+  "known_facts": [
+    "Employment contract Clause 12 requires 60 days severance notice or salary.",
+    "Internal email proved management resolved on 02 April to exit the employee.",
+    "Misconduct warning notice was issued on 10 April as pretext."
+  ],
+  "known_contradictions": [
+    {
+      "source_a": "Internal Email Audit Log (02 April 2024)",
+      "source_b": "Performance Warning Notice (10 April 2024)",
+      "contradiction_type": "TIMELINE_CONFLICT",
+      "explanation": "Management planned termination on 02 April prior to any formal performance evaluation warning."
+    }
+  ],
+  "expected_verdict": "PLAINTIFF_SUCCEEDS"
+}

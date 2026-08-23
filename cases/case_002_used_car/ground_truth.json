@@ -1,0 +1,17 @@
+{
+  "case_id": "AAD-2026-002",
+  "known_facts": [
+    "Vehicle advertised as 100% accident-free certified pre-owned car.",
+    "Buyer paid ₹6,50,000 on 20 March 2024.",
+    "OEM authorized workshop confirmed major chassis collision repair from Nov 2023."
+  ],
+  "known_contradictions": [
+    {
+      "source_a": "Sales Advertisement '100% Accident Free'",
+      "source_b": "OEM Workshop Service History (Nov 2023)",
+      "contradiction_type": "FACTUAL_CONTRADICTION",
+      "explanation": "Marketing materials guaranteed clean accident history while manufacturer database proved major structural repair."
+    }
+  ],
+  "expected_verdict": "PLAINTIFF_SUCCEEDS"
+}

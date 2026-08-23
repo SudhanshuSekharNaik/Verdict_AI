@@ -1,0 +1,16 @@
+{
+  "case_id": "AAD-2026-004",
+  "known_facts": [
+    "Buyer bought laptop advertised as Brand New Sealed for ₹85,000.",
+    "Serial number validation showed prior activation 6 months earlier."
+  ],
+  "known_contradictions": [
+    {
+      "source_a": "Retail Invoice (April 2024)",
+      "source_b": "OEM Warranty Activation Record (October 2023)",
+      "contradiction_type": "TIMELINE_CONFLICT",
+      "explanation": "Device warranty was initialized 6 months prior to retail purchase."
+    }
+  ],
+  "expected_verdict": "PLAINTIFF_SUCCEEDS"
+}
