@@ -4,8 +4,8 @@ services:
     runtime: python
     plan: free
     healthCheckPath: /health
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir backend
+    buildCommand: pip install -r backend/requirements-deploy.txt
+    startCommand: cd backend && PYTHONPATH=/opt/render/project/src uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
@@ -13,3 +13,7 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:////tmp/aadalat.db
+      - key: BACKEND_CORS_ORIGINS
+        value: "*"

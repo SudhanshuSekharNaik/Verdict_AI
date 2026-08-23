@@ -1,5 +1,7 @@
+import logging
 import sys
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -16,6 +18,23 @@ from app.database.session import engine
 from app.models.base import Base
 from app.schemas.response import APIResponse, ErrorDetail
 
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler — replaces deprecated @app.on_event."""
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables created/verified successfully.")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("DB init warning (non-fatal): %s", exc)
+    yield
+    # Shutdown: dispose engine connections
+    await engine.dispose()
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Evidence-Grounded Multi-Agent Courtroom Simulation & Legal Intelligence Platform",
@@ -23,21 +42,20 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
+
+# CORS — allow all origins if "*" is present, otherwise use the list
+_cors_origins = settings.BACKEND_CORS_ORIGINS
+_allow_all = "*" in _cors_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"] if _allow_all else _cors_origins,
+    allow_credentials=not _allow_all,  # credentials can't be used with wildcard origin
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-async def init_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
 
 @app.middleware("http")
@@ -86,6 +104,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled exception: %s", exc)
     return JSONResponse(
         status_code=500,
         content=APIResponse(
