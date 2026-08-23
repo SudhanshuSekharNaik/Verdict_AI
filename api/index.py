@@ -1,14 +1,14 @@
-# Vercel entrypoint — re-exports the FastAPI app from its actual location.
-# Vercel's Python runtime always looks here first (api/index.py → variable: app).
-# PYTHONPATH is set to the repo root via vercel.json so the import resolves.
+"""
+Vercel Python entrypoint.
+
+Vercel scans `api/index.py` for a top-level `app` variable.
+This module adds the repo root to sys.path then assigns `app`
+as a direct local name so both static analysis and runtime resolve it.
+"""
 import sys
 from pathlib import Path
 
-# Ensure repo root is on sys.path so `backend.app.main` resolves
-_ROOT = Path(__file__).resolve().parents[1]
-if str(_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ROOT))
+# /var/task is the repo root inside Vercel's Lambda sandbox
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.app.main import app  # noqa: E402 — re-export for Vercel
-
-__all__ = ["app"]
+from backend.app.main import app as app  # explicit `app = ...` pattern for static scanners  # noqa: F401, E402

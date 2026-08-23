@@ -1,19 +1,11 @@
 {
   "buildCommand": "pip install -r backend/requirements-deploy.txt",
-  "installCommand": "pip install -r backend/requirements-deploy.txt",
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "api/index.py"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index" }
   ],
   "env": {
-    "PYTHONPATH": "/var/task"
+    "PYTHONPATH": "/var/task",
+    "DATABASE_URL": "sqlite+aiosqlite:////tmp/aadalat.db",
+    "BACKEND_CORS_ORIGINS": "*"
   }
 }
