@@ -6983,15 +6983,51 @@ async function runAllHearingsDirectly() {
     btn.disabled = true;
   }
   try {
-    const res = await fetch(`${API_BASE}/api/cases/${activeCaseId}/run`, { method: "POST" });
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.detail || `Simulation failed (${res.status})`);
+    // Poll /step in a loop rather than one giant blocking /run call.
+    // Each step is a single Groq API call (~3-8s). Polling lets the UI
+    // stay live, shows progress, and avoids browser fetch timeouts.
+    const MAX_STEPS = 70; // Safety cap — enough for any case
+    for (let step = 0; step < MAX_STEPS; step++) {
+      // Update button text with live turn count
+      if (btn) btn.innerText = `⏳ Simulating… turn ${step + 1}`;
+
+      const stepRes = await fetch(`${API_BASE}/api/cases/${activeCaseId}/trial/step`, {
+        method: "POST",
+      });
+      if (!stepRes.ok) {
+        const errJson = await stepRes.json().catch(() => ({}));
+        throw new Error(errJson.detail || `Step failed (${stepRes.status})`);
+      }
+      const turnData = await stepRes.json();
+
+      // Refresh case state and re-render after every step
+      const caseRes = await fetch(`${API_BASE}/api/cases/${activeCaseId}`);
+      currentCaseData = await caseRes.json();
+      renderCourtroomArena(currentCaseData);
+
+      // Stop when verdict delivered
+      if (
+        currentCaseData.status === "resolved" ||
+        turnData.is_completed ||
+        currentCaseData.verdict
+      ) {
+        setTimeout(() => {
+          showCinematicVerdictModal(
+            currentCaseData.verdict || {
+              decision: "TRIAL CONCLUDED",
+              decision_basis: "All hearings concluded on the canonical record.",
+            }
+          );
+        }, 800);
+        return;
+      }
     }
-    currentCaseData = await res.json();
+    // Safety fallback: refresh and show whatever state we're in
+    const caseRes = await fetch(`${API_BASE}/api/cases/${activeCaseId}`);
+    currentCaseData = await caseRes.json();
     renderCourtroomArena(currentCaseData);
-    if (currentCaseData.verdict || currentCaseData.status === 'resolved') {
-      showCinematicVerdictModal(currentCaseData.verdict || { decision: "TRIAL CONCLUDED", decision_basis: "All hearings concluded on the canonical record." });
+    if (currentCaseData.verdict || currentCaseData.status === "resolved") {
+      showCinematicVerdictModal(currentCaseData.verdict);
     }
   } catch (err) {
     alert("Fast-forward error: " + err.message);
@@ -7002,6 +7038,7 @@ async function runAllHearingsDirectly() {
     }
   }
 }
+
 
 let autoPlayInterval = null;
 function toggleAutoPlaySimulation() {

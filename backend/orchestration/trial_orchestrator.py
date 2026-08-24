@@ -1093,7 +1093,7 @@ def handle_introduce_evidence(case_id: str, evidence_id: str) -> Dict[str, Any]:
 
 
 def execute_full_case_sync(case_id: str) -> CaseDetail:
-    max_steps = 25
+    max_steps = 60  # Enough for 3+ witnesses (each ~6 turns) + openings/closings/deliberation
     steps = 0
     while steps < max_steps:
         resp = execute_next_turn(case_id)
