@@ -10,6 +10,26 @@
 
 This is the deployed production application — a self-contained FastAPI service that serves both the API and the courtroom UI. Open it to file or load a case, watch AI counsel argue turn-by-turn, and see an AI Judge deliver a reasoned, statute-cited verdict.
 
+## Highlights
+
+A quick summary of what this project demonstrates, for anyone skimming:
+
+- **Multi-agent LLM orchestration** — five role-bound agents (Prosecution, Defense, Witness, Critic, Judge) with a custom Python state machine (not an off-the-shelf framework) driving a turn-by-turn trial instead of one prompt/one response.
+- **Fact-grounding & hallucination control** — a dedicated Critic agent checks every generated argument against a locked canonical fact record before it's accepted into the transcript.
+- **Domain-specific retrieval** — a self-built statutory search layer (deterministic hashed-vector similarity) grounds the Judge's reasoning in real Indian statutes (BNS/BSA/BNSS), with citations in the final verdict.
+- **A real, usable product surface**, not just a backend: an 8-step case-filing wizard, a 14-persona specialist advocate roster, live objection/judge-intervention flows, and a dashboard — all served from a single lean FastAPI deployment (SQLite + Groq API, no GPU/torch dependency).
+- **Deployed and working** at [verdict-ai-hisy.onrender.com](https://verdict-ai-hisy.onrender.com/), not just running locally.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Landing page](screenshots/01-landing.png) *Landing page — framed around India's real court backlog* | ![Courtroom hearing](screenshots/02-courtroom-hearing.png) *Live hearing — stage tracker, live transcript, witness panel* |
+| ![Specialist counsel selection](screenshots/03-counsel-selection.png) *Choosing from the 14-advocate specialist roster* | ![Evidence register](screenshots/04-evidence-register.png) *Case filing — evidence & exhibits register* |
+| ![Courtroom dashboard](screenshots/05-dashboard.png) *Dashboard — case stages and verdict stats* | ![Verdict](screenshots/06-verdict.png) *AI Judge's final verdict, with export & re-run options* |
+
+*(Screenshots live in [`/screenshots`](./screenshots) in this repo.)*
+
 ## Problem
 
 India's courts face a well-documented backlog — the live platform itself opens on this framing, citing over **4.4 crore** pending cases, average case durations of **~15 years**, roughly **11 judges per million** people, and under **1 lakh** courts nationwide. More generally, legal reasoning is adversarial and multi-sided, not a single answer. A useful courtroom simulation needs to:
