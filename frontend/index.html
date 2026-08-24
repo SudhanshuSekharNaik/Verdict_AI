@@ -4861,6 +4861,7 @@ let currentCaseData = null;
 let isAudioPlaying = false;
 let speechSynth = typeof window !== 'undefined' ? window.speechSynthesis : null;
 let speechRate = 1.0;
+let _stepLock = false; // Global mutex — prevents concurrent /trial/step calls
 
 // 14 Specialist AI Agents Roster
 const COUNSEL_ROSTER = [
@@ -6977,30 +6978,51 @@ async function finalizeWizardAndRunAllHearings() {
 
 async function runAllHearingsDirectly() {
   if (!activeCaseId) return;
+  // Stop any running Auto-Play before starting fast-forward
+  if (autoPlayInterval) {
+    clearInterval(autoPlayInterval);
+    autoPlayInterval = null;
+    const apBtn = document.getElementById("btnAutoPlayHearings");
+    if (apBtn) {
+      apBtn.innerText = "▶ Auto-Play Simulation";
+      apBtn.style.borderColor = "var(--brass-bright)";
+      apBtn.style.color = "var(--brass-bright)";
+    }
+  }
+
   const btn = document.getElementById("btnFastForwardVerdict");
   if (btn) {
     btn.innerText = "⏳ Simulating All Hearings...";
     btn.disabled = true;
   }
   try {
-    // Poll /step in a loop rather than one giant blocking /run call.
-    // Each step is a single Groq API call (~3-8s). Polling lets the UI
-    // stay live, shows progress, and avoids browser fetch timeouts.
-    const MAX_STEPS = 70; // Safety cap — enough for any case
+    // Poll /step sequentially — each step is one Groq call.
+    // Uses _stepLock to prevent Auto-Play or manual Next-Turn from
+    // firing a parallel step while this loop is running.
+    const MAX_STEPS = 70;
     for (let step = 0; step < MAX_STEPS; step++) {
-      // Update button text with live turn count
       if (btn) btn.innerText = `⏳ Simulating… turn ${step + 1}`;
 
-      const stepRes = await fetch(`${API_BASE}/api/cases/${activeCaseId}/trial/step`, {
-        method: "POST",
-      });
-      if (!stepRes.ok) {
-        const errJson = await stepRes.json().catch(() => ({}));
-        throw new Error(errJson.detail || `Step failed (${stepRes.status})`);
-      }
-      const turnData = await stepRes.json();
+      // Acquire lock
+      if (_stepLock) { await new Promise(r => setTimeout(r, 300)); }
+      if (_stepLock) break; // Still locked after wait — abort
+      _stepLock = true;
 
-      // Refresh case state and re-render after every step
+      let turnData;
+      try {
+        const stepRes = await fetch(`${API_BASE}/api/cases/${activeCaseId}/trial/step`, {
+          method: "POST",
+        });
+        if (!stepRes.ok) {
+          const errJson = await stepRes.json().catch(() => ({}));
+          throw new Error(errJson.detail || `Step failed (${stepRes.status})`);
+        }
+        turnData = await stepRes.json();
+      } finally {
+        _stepLock = false;
+      }
+
+      // Refresh case state and re-render
       const caseRes = await fetch(`${API_BASE}/api/cases/${activeCaseId}`);
       currentCaseData = await caseRes.json();
       renderCourtroomArena(currentCaseData);
@@ -7008,7 +7030,7 @@ async function runAllHearingsDirectly() {
       // Stop when verdict delivered
       if (
         currentCaseData.status === "resolved" ||
-        turnData.is_completed ||
+        (turnData && turnData.is_completed) ||
         currentCaseData.verdict
       ) {
         setTimeout(() => {
@@ -7022,7 +7044,7 @@ async function runAllHearingsDirectly() {
         return;
       }
     }
-    // Safety fallback: refresh and show whatever state we're in
+    // Safety fallback
     const caseRes = await fetch(`${API_BASE}/api/cases/${activeCaseId}`);
     currentCaseData = await caseRes.json();
     renderCourtroomArena(currentCaseData);
@@ -7030,6 +7052,7 @@ async function runAllHearingsDirectly() {
       showCinematicVerdictModal(currentCaseData.verdict);
     }
   } catch (err) {
+    _stepLock = false;
     alert("Fast-forward error: " + err.message);
   } finally {
     if (btn) {
@@ -7065,7 +7088,7 @@ function toggleAutoPlaySimulation() {
     btn.style.color = "var(--prosecution-accent)";
   }
 
-  // Advance immediately, then repeat every 2.4s
+  // Advance immediately, then repeat every 4s (gives each Groq call room to finish)
   advanceProceduralStep();
   autoPlayInterval = setInterval(async () => {
     if (!currentCaseData || currentCaseData.status === 'resolved') {
@@ -7078,8 +7101,10 @@ function toggleAutoPlaySimulation() {
       }
       return;
     }
+    // Skip if another step call is already in flight
+    if (_stepLock) return;
     await advanceProceduralStep();
-  }, 2400);
+  }, 4000);
 }
 
 // ---------- 3. CENTRAL CASE ROOM HUB ----------
@@ -8240,10 +8265,12 @@ async function advanceProceduralStep() {
     viewFullJudicialOpinion();
     return;
   }
+  // Prevent parallel step calls
+  if (_stepLock) return;
+  _stepLock = true;
 
   const btn = document.getElementById("btnCourtNextAction");
-  btn.innerText = "⏳ Processing Turn...";
-  btn.disabled = true;
+  if (btn) { btn.innerText = "⏳ Processing Turn..."; btn.disabled = true; }
 
   try {
     const res = await fetch(`${API_BASE}/api/cases/${activeCaseId}/trial/step`, {
@@ -8266,7 +8293,8 @@ async function advanceProceduralStep() {
   } catch (err) {
     alert("Turn error: " + err.message);
   } finally {
-    btn.disabled = false;
+    _stepLock = false;
+    if (btn) btn.disabled = false;
   }
 }
 
