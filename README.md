@@ -4,17 +4,15 @@
 
 **VerdictAI** is an evidence-grounded, multi-agent courtroom simulation platform. Instead of a single LLM producing one response to a legal prompt, it orchestrates distinct AI counsel — Prosecution, Defense, Witnesses, and a Presiding Judge — through a turn-by-turn adversarial hearing that is strictly grounded in a canonical fact record and Indian statutory law (BNS / BSA / BNSS, with IPC cross-references).
 
-
-
 ## 🚀 Live Demo
 
 **[https://verdict-ai-hisy.onrender.com/](https://verdict-ai-hisy.onrender.com/)**
 
-This is the deployed production application — a self-contained FastAPI service that serves both the API and the courtroom UI. Open it to run a full simulated hearing, watch agents argue turn-by-turn, and see an AI Judge deliver a reasoned verdict.
+This is the deployed production application — a self-contained FastAPI service that serves both the API and the courtroom UI. Open it to file or load a case, watch AI counsel argue turn-by-turn, and see an AI Judge deliver a reasoned, statute-cited verdict.
 
 ## Problem
 
-Legal reasoning is adversarial and multi-sided, not a single answer. A useful courtroom simulation needs to:
+India's courts face a well-documented backlog — the live platform itself opens on this framing, citing over **4.4 crore** pending cases, average case durations of **~15 years**, roughly **11 judges per million** people, and under **1 lakh** courts nationwide. More generally, legal reasoning is adversarial and multi-sided, not a single answer. A useful courtroom simulation needs to:
 
 - represent opposing parties who argue *from the same fact record* without inventing evidence
 - let evidence, witness testimony, and objections shape what happens next
@@ -27,36 +25,48 @@ A single prompt-response LLM call models none of this — there's no adversarial
 
 VerdictAI models a courtroom as a **stateful, turn-based workflow** rather than one large generation:
 
-- Distinct agents are bound to distinct roles (Prosecution, Defense, Witness, Judge) with role-specific system prompts
-- Every case has a canonical fact record; agents are instructed to argue only from facts and evidence actually in that record
-- A trial advances one turn at a time via an explicit `/trial/step` endpoint, so the frontend can render each turn as it happens instead of blocking on one long request
-- A separate Judge agent — not the arguing agents — evaluates the record and issues a structured verdict, citing applicable Indian statutory provisions
+- Distinct agents are bound to distinct roles (Prosecution, Defense, Witness, Judge) with role-specific system prompts, chosen from a roster of specialist AI advocate personas
+- Every case has a canonical, locked fact record; agents are instructed to argue only from facts and evidence actually in that record
+- A trial advances one turn at a time through explicit courtroom stages (Opening → Evidence → Witnesses → Cross-Exam → Closings → Judgment), so the UI can render each turn as it happens instead of blocking on one long request
+- A separate Judge agent — not the arguing agents — evaluates the record and issues a structured, statute-cited verdict
 
 ## Key Features
 
 ### Multi-Agent Courtroom
 Prosecution, Defense, Witness, and Judge agents are implemented as separate classes with their own system prompts (`backend/agents/`), each constrained to the case's fact record.
 
+### Specialist AI Advocate Roster (14 Advocates)
+Rather than one generic "lawyer" agent per side, the case-filing flow lets you pick from **14 specialist AI advocates** for the Filing and Opposing counsel — e.g. a *Public Prosecutor* ("Standing Counsel / Special Public Prosecutor"), a *Criminal Defense Advocate* ("Advocate on Record, Delhi HC & Sessions Courts"), and a *Family & Matrimonial Advocate* ("Senior Family Court Litigator, Bombay HC"), among others. Each is tagged with the statutes it specializes in (e.g. `BNS 2023 §103/§303`, `BNSS 2023`, `BSA 2023 §104`, `HMA 1955`, `PWDVA 2005`) and a short persona description (e.g. *"Vigorous, meticulous on burden of proof, relentless on procedural flaws and benefit of doubt."*). The platform recommends a default pairing per case category, which can be overridden.
+
+### Guided Case Filing Wizard
+Filing a case walks through an 8-step dossier flow: **01 Case → 02 Counsel → 03 Facts → 04 Issues → 05 Parties → 06 Evidence → 07 Witnesses → 08 Review.** Quick-load templates are available for common archetypes (e.g. a Theft / BNS §303 case, a Cyber IT Act / BSA §63 case, a Vestibule Altercation / BNS §103 case) alongside the K.M. Nanavati benchmark. A "Canonical Record Integrity" notice makes explicit that AI agents may reason **only** from information entered into this record and must not invent witnesses, forensic reports, or other facts.
+
 ### Fact-Grounding & Contradiction Checking
 A dedicated **Critic Agent** reviews generated arguments for unsupported claims (facts not in the record) and self-contradictions across turns before they're accepted into the trial transcript.
 
 ### Evidence & Witnesses
-Evidence items and sworn witnesses can be attached to a case and are referenced by agents during arguments and objections (`/cases/{id}/evidence`, `/cases/{id}/witnesses`).
+Evidence exhibits (tagged Prosecution/Defense, each with a title, description, and source) and sworn witnesses (each with a role and a one-line summary of expected testimony) are registered per case during filing, then referenced by agents during arguments, cross-examination, and objections.
 
 ### Turn-by-Turn Trial Orchestration
-The trial advances step by step through `POST /cases/{id}/trial/step` (aliased as `/trial/next-turn`), rather than one long-running request — the UI updates as each turn resolves.
+The trial advances step by step through the backend's `/trial/step` endpoint. The courtroom UI shows a live stage tracker (Opening ✓ → Evidence ✓ → Witnesses ● → Cross-Exam → Closings → Judgment), the currently speaking party, an exchange counter, and running tallies of admitted exhibits and objections — so the hearing renders turn-by-turn instead of behind one long request.
 
-### Objections & Evidence Introduction
-Dedicated endpoints allow raising objections and introducing evidence mid-trial (`/trial/objection`, `/trial/introduce-evidence`).
+### Objections & Judge Interventions
+Counsel can raise a **procedural objection** mid-hearing via a modal — selecting which counsel is objecting and a specific statutory ground (e.g. *"Leading Question (Improper on Direct Examination)"*, drawn from BSA rules) — which is submitted to the Judge agent for a ruling. The Judge agent can also proactively intervene with procedural direction to counsel or a witness (e.g. confining questions to personal observations, citing the relevant BSA section), which must be acknowledged before the hearing continues.
+
+### Auto-Play & Fast-Forward
+A hearing can be stepped through manually, played turn-by-turn with **Auto-Play Simulation**, or skipped straight to a verdict with **Fast-Forward All to Verdict** — useful both for a passive "watch it happen" experience and for quickly reaching a judgment during case review.
 
 ### Judge Agent & Verdict
-The Judge agent evaluates burden of proof, applicable statutory provisions, and any affirmative defenses raised, then returns a structured verdict (guilty/not guilty or a civil disposition) with a written reasoning summary.
+The Judge agent evaluates burden of proof, applicable statutory provisions, and any affirmative defenses raised, then returns a structured verdict — the UI surfaces this as a modal (e.g. **"GUILTY / CONVICTED"**) noting the evidence was *"evaluated under BSA standards and required burden of proof,"* along with specific holdings (e.g. *"[HELD] Establishment of essential elements"*). From there you can view the full written judicial opinion, export a verdict dossier as Markdown, or re-run the trial.
 
 ### Indian Statutory Law Lookup
-A standalone law-search API (`/api/law/search`, `/api/law/provision/{id}`) serves a curated set of Bharatiya Nyaya Sanhita (BNS) and Bharatiya Sakshya Adhiniyam (BSA) provisions, with legacy IPC/Evidence Act cross-references, used to ground the Judge's reasoning.
+A standalone law-search page/API serves a curated set of Bharatiya Nyaya Sanhita (BNS), Bharatiya Sakshya Adhiniyam (BSA), Bharatiya Nagarik Suraksha Sanhita (BNSS), and Constitutional provisions, used to ground the Judge's reasoning and to tag advocate specialisms.
 
-### Audience Mode
-The frontend includes a passive "Audience Mode" viewing flow — enter the courtroom, a countdown, **"Court is now in session,"** then a **Fast-Forward** mode that autonomously steps the trial through to verdict for the viewer to watch.
+### Courtroom Dashboard
+A dashboard view tracks case-level stats (Total Cases, Pending Cases, Active Hearings, Resolved Cases, Verdict Split) and lists cases by stage: **Ongoing Hearings**, **Evidence / Witness Hearings**, **Awaiting Judgment**, and **Recently Resolved** — plus a live courtroom activity stream acting as a procedural audit trail.
+
+### Audio Assist
+Courtroom turns can be read aloud via a "Read Aloud" control with adjustable playback speed, alongside the live hearing transcript.
 
 ## Multi-Agent Architecture
 
@@ -66,9 +76,9 @@ The frontend includes a passive "Audience Mode" viewing flow — enter the court
 | Defense | `agents/defense_agent.py` | Challenges the prosecution's case, raises defenses/exceptions, delivers closing argument |
 | Witness | `agents/witness_agent.py` | Answers questions strictly from an assigned role, linked facts, and shown exhibits — refuses to speculate beyond assigned knowledge |
 | Critic | `agents/critic_agent.py` | Fact-checks each generated argument for hallucinated claims or contradictions before it enters the record |
-| Judge | `agents/judge_agent.py` | Evaluates evidence and arguments, applies burden of proof and statutory provisions, delivers the final structured verdict |
+| Judge | `agents/judge_agent.py` | Evaluates evidence and arguments, applies burden of proof and statutory provisions, rules on objections, delivers the final structured verdict |
 
-All agents share a common `BaseCourtroomAgent` (`agents/base_agent.py`), which calls the **Groq API** for inference.
+All agents share a common `BaseCourtroomAgent` (`agents/base_agent.py`), which calls the **Groq API** for inference. The 14-advocate roster (`agents/lawyer_roster.py`) supplies the persona/specialization layer on top of the core Prosecution and Defense agent classes.
 
 ## Trial Orchestration
 
@@ -76,16 +86,16 @@ Trial progression is handled by `backend/orchestration/trial_orchestrator.py` an
 
 - `POST /cases/{id}/trial/start` — initializes a trial for a case
 - `POST /cases/{id}/trial/step` — advances the trial by one turn and returns the next transcript entry
-- `POST /cases/{id}/trial/objection` — raises an objection mid-trial
+- `POST /cases/{id}/trial/objection` — raises an objection mid-trial for the Judge to rule on
 - `POST /cases/{id}/trial/introduce-evidence` — introduces a new evidence item mid-trial
 - `POST /cases/{id}/trial/reset` — resets a trial back to its starting state
-- `POST /cases/{id}/run` — runs the case's full pipeline end-to-end in one call
+- `POST /cases/{id}/run` — runs the case's full pipeline end-to-end in one call (used by Fast-Forward)
 
 Case, transcript, evidence, and witness state are persisted per case (see **Evidence & Legal Intelligence** below), so a trial can be stepped through incrementally across multiple requests rather than depending on one long-lived connection.
 
 ## Evidence & Legal Intelligence
 
-Evidence is submitted per case via `POST /cases/{id}/evidence` and stored alongside the case record. During arguments, agents receive the relevant evidence and witness statements as part of their grounding context, and are constrained to reference only what's actually in that record.
+Evidence is submitted per case (via the filing wizard or `POST /cases/{id}/evidence`) and stored alongside the case record, tagged by which party filed it, a document type, and a source. During arguments, agents receive the relevant evidence and witness statements as part of their grounding context, and are constrained to reference only what's actually in that record.
 
 For statutory grounding, `backend/services/rag_service.py` implements a lightweight, self-contained retrieval layer: it builds deterministic hash-based text vectors (no external embedding model) over a local statutory knowledge base and ranks provisions by cosine similarity to a query. It is not a Hugging Face / sentence-transformers pipeline, and does not use BM25 or a cross-encoder reranker.
 
@@ -94,20 +104,20 @@ For statutory grounding, `backend/services/rag_service.py` implements a lightwei
 The Judge agent's verdict process (`agents/judge_agent.py`) evaluates:
 
 - the established facts and evidentiary record
-- prosecution and defense arguments raised during the trial
+- prosecution and defense arguments raised during the trial, plus any ruled-on objections
 - burden of proof (e.g., BSA §104 / prior Evidence Act §101 for the prosecution; BSA §108 / §105 where the accused raises an affirmative defense)
 - applicable statutory provisions (BNS with legacy IPC cross-references) relevant to the charge or dispute
 - any affirmative defenses (e.g., grave and sudden provocation) evaluated against their specific legal elements
 
-It returns a structured verdict object with a verdict category, applicable statute citations, and a multi-paragraph written reasoning summary.
+It returns a structured verdict object — verdict category, applicable statute citations, and a multi-paragraph written reasoning summary — presented in the UI as a decision modal with an exportable dossier.
 
 > **Note:** VerdictAI is an experimental AI simulation. Its outputs are not legal advice and are not a substitute for a real judicial decision.
 
 ## Case Library
 
-The application ships with one built-in demo case, seeded automatically on first run: **State of Maharashtra v. Rohan Verma**, a criminal case (murder charge, with forensic and circumstantial evidence) used as the default courtroom scenario. Additional cases can be created through `POST /cases`.
+The application ships with one built-in demo case, seeded automatically on first run: **State of Maharashtra v. Rohan Verma**, a criminal case (murder charge, with forensic and circumstantial evidence, three witnesses, and seven exhibits) used as the default courtroom scenario. Additional cases can be created through the filing wizard or `POST /cases`, including quick-load archetype templates (theft, cyber/IT Act, and altercation cases).
 
-A separate benchmark script (`backend/test_nanavati_benchmark.py`) runs the Judge agent against the real historical facts of **State of Maharashtra v. K.M. Nanavati** (1959 / AIR 1962 SC 605) as a reasoning benchmark. This is a historical case used to sanity-check the Judge's reasoning against a well-documented real judgment — VerdictAI's output on it is an AI simulation, not a reproduction of the actual Supreme Court decision.
+A separate benchmark, runnable both as a UI template and via `backend/test_nanavati_benchmark.py`, walks the Judge agent through the real historical facts of **State of Maharashtra v. K.M. Nanavati** (1959 / AIR 1962 SC 605) — down to the original 8–1 jury "not guilty" verdict as a defense exhibit — as a reasoning benchmark. This is a historical case used to sanity-check the Judge's reasoning against a well-documented real judgment; VerdictAI's output on it is an AI simulation, not a reproduction of the actual Supreme Court decision.
 
 ## Tech Stack
 
@@ -126,7 +136,7 @@ A separate benchmark script (`backend/test_nanavati_benchmark.py`) runs the Judg
 | LLM Provider | [Groq](https://console.groq.com/) — configured via `GROQ_API_KEY` |
 | Default Model | `openai/gpt-oss-120b` (configurable via `GROQ_MODEL`) |
 | Agent Orchestration | Custom Python orchestrator (`backend/orchestration/trial_orchestrator.py`) — not LangGraph |
-| Statutory Retrieval | Custom deterministic hashed-vector similarity search over a local BNS/BSA knowledge base — no external embedding or reranker models |
+| Statutory Retrieval | Custom deterministic hashed-vector similarity search over a local BNS/BSA/BNSS/Constitution knowledge base — no external embedding or reranker models |
 
 ## Project Structure
 
@@ -137,7 +147,7 @@ Verdict_AI/
 ├── backend/
 │   ├── main.py              # FastAPI app entrypoint; mounts frontend + API routers
 │   ├── config.py            # Reads GROQ_API_KEY / GROQ_MODEL / ARGUMENT_ROUNDS
-│   ├── agents/               # ProsecutionAgent, DefenseAgent, WitnessAgent, CriticAgent, JudgeAgent
+│   ├── agents/               # ProsecutionAgent, DefenseAgent, WitnessAgent, CriticAgent, JudgeAgent, lawyer_roster.py
 │   ├── orchestration/         # trial_orchestrator.py — steps a trial forward turn by turn
 │   ├── routers/               # cases.py, law.py — the FastAPI API surface
 │   ├── services/              # database.py (SQLite), rag_service.py, law_service.py
@@ -170,10 +180,10 @@ POST /cases/{case_id}/trial/step         Advance the trial by one turn
 POST /cases/{case_id}/trial/objection    Raise an objection
 POST /cases/{case_id}/trial/introduce-evidence
 POST /cases/{case_id}/trial/reset        Reset a trial
-POST /cases/{case_id}/run                Run the full case pipeline
+POST /cases/{case_id}/run                Run the full case pipeline (Fast-Forward)
 GET  /cases/{case_id}/report             Get the case report
 GET  /cases/{case_id}/legal-analysis
-GET  /api/law/search                     Search BNS/BSA/BNSS provisions
+GET  /api/law/search                     Search BNS/BSA/BNSS/Constitution provisions
 GET  /api/law/provision/{provision_id}
 ```
 
@@ -260,17 +270,19 @@ healthCheckPath: /api/health
 VerdictAI is not intended to be a single LLM prompt that generates a fictional verdict. It's built around an explicit courtroom workflow:
 
 ```text
-Case & Fact Record
+Case & Fact Record (locked, canonical)
+    ↓
+Specialist Counsel Selection
     ↓
 Evidence & Witnesses
     ↓
 Prosecution Argument  ⇄  Defense Argument
     ↓
-Objections / Critic fact-check
+Objections / Judge Interventions / Critic fact-check
     ↓
 Judge: burden of proof, statute, evaluation
     ↓
-Verdict
+Verdict (+ exportable dossier)
 ```
 
 ## Limitations
@@ -286,7 +298,7 @@ Verdict
 - Broader statutory knowledge base coverage
 - Persistent, non-ephemeral storage for production
 - Multi-user / multi-session support
-- Expanded case library beyond the current demo case
+- Expanded case library beyond the current demo case and quick-load archetypes
 - Stronger evaluation benchmarks beyond the single Nanavati comparison
 
 ## Security & Privacy
