@@ -11,4 +11,4 @@ from pathlib import Path
 # /var/task is the repo root inside Vercel's Lambda sandbox
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.app.main import app as app  # explicit `app = ...` pattern for static scanners  # noqa: F401, E402
+from main import app as app  # explicit `app = ...` pattern for static scanners  # noqa: F401, E402

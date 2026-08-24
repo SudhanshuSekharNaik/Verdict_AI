@@ -4,13 +4,19 @@ services:
     runtime: python
     plan: free
     healthCheckPath: /api/health
-    # Install ONLY the lean VerdictAI production stack (8 packages, no CUDA/torch/langchain)
+    # Install the lean dependency set used by the full VerdictAI FastAPI app.
     buildCommand: pip install --no-cache-dir -r backend/requirements.txt
-    # VerdictAI backend serves frontend/index.html as static files at /
-    # $PORT is provided by Render — never hardcode a port
+    # backend/main.py serves the current frontend/index.html at /
+    # $PORT is provided by Render - never hardcode a port
     startCommand: uvicorn main:app --app-dir backend --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.8"
       - key: GROQ_API_KEY
         sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:////tmp/aadalat.db
+      - key: BACKEND_CORS_ORIGINS
+        value: "*"
