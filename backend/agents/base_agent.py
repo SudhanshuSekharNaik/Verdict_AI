@@ -31,7 +31,7 @@ class BaseCourtroomAgent:
     def say(
         self,
         user_message: str,
-        max_tokens: int = 1200,
+        max_tokens: int = 700,
         temperature: float = 0.5,
         json_mode: bool = False,
     ) -> str:
@@ -81,7 +81,7 @@ class BaseCourtroomAgent:
         return fallback_reply
 
     def say_json(
-        self, user_message: str, max_tokens: int = 1500, temperature: float = 0.25
+        self, user_message: str, max_tokens: int = 900, temperature: float = 0.25
     ) -> Dict[str, Any]:
         """Calls the agent and guarantees extraction of structured fields even from partial or unescaped JSON."""
         # Append instruction to ensure model starts with {

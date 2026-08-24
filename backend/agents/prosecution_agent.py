@@ -108,7 +108,7 @@ DISCLAIMER: Fictional simulation for research and legal analysis."""
             context_parts.append(f"PROCEDURAL CORRECTION: {correction_feedback}. Ensure strict grounding.")
 
         context_parts.append("Deliver your single analytical turn now as the specified JSON object.")
-        return self.say_json("\n\n".join(context_parts), max_tokens=1200, temperature=0.35)
+        return self.say_json("\n\n".join(context_parts), max_tokens=700, temperature=0.35)
 
     def generate_opening(self, case_charge: str = "") -> Dict[str, Any]:
         target_charge = case_charge or self.charge_or_dispute
@@ -134,7 +134,7 @@ Return ONLY a JSON object:
   "evidence_references": ["Fact #1", "Fact #2"],
   "strength": "strong"
 }}"""
-        return self.say_json(prompt, max_tokens=1100, temperature=0.3)
+        return self.say_json(prompt, max_tokens=600, temperature=0.3)
 
     def generate_examination_question(
         self,
@@ -217,4 +217,4 @@ Return ONLY a JSON object:
   "evidence_references": ["Fact #1", "Fact #2", "P-EX-01"],
   "strength": "strong"
 }}"""
-        return self.say_json(prompt, max_tokens=1300, temperature=0.3)
+        return self.say_json(prompt, max_tokens=800, temperature=0.3)

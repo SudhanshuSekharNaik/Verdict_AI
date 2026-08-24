@@ -191,7 +191,7 @@ JUDICIAL DELIBERATION DIRECTIVE:
 
 Deliver your complete structured verdict JSON now."""
 
-        res = self.say_json(prompt, max_tokens=1800, temperature=0.2)
+        res = self.say_json(prompt, max_tokens=1100, temperature=0.2)
 
         # Standardize verdict fields
         raw_verd = str(res.get("verdict", "")).lower()

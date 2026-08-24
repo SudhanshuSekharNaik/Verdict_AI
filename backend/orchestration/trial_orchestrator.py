@@ -381,7 +381,7 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
         cross_turns = [t for t in w_turns if t.get("stage") == "cross_examination"]
 
         # Direct Examination: 3 questions
-        if len(direct_turns) < 3:
+        if len(direct_turns) < 2:
             q_num = len(direct_turns) + 1
             raw_q = prosecution.generate_examination_question(
                 witness_name=witness.name,
@@ -457,8 +457,8 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                     evidence_action="admitted",
                 )
 
-            next_spk = "prosecution" if q_num < 3 else "defense"
-            next_prompt = f"Next Examination Question ({q_num + 1}/3)" if q_num < 3 else "Proceed to Cross-Examination (1/3)"
+            next_spk = "prosecution" if q_num < 2 else "defense"
+            next_prompt = f"Next Examination Question ({q_num + 1}/2)" if q_num < 2 else "Proceed to Cross-Examination (1/2)"
 
             conn = database.get_db_connection()
             with conn:
@@ -483,7 +483,7 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             )
 
         # Cross-Examination turns: 3 questions
-        elif len(cross_turns) < 3:
+        elif len(cross_turns) < 2:
             cross_num = len(cross_turns) + 1
             raw_cross = defense.generate_cross_question(
                 witness_name=witness.name,
@@ -532,7 +532,7 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             )
 
             # Check if this witness completed all 3 cross questions
-            if cross_num >= 3:
+            if cross_num >= 2:
                 database.update_witness_status(witness.id, "discharged", case_id=case.id)
                 database.save_courtroom_event(
                     case.id,
@@ -652,7 +652,7 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
         cross_turns = [t for t in w_turns if t.get("stage") == "cross_examination"]
 
         # Defence Direct Examination: 3 questions
-        if len(direct_turns) < 3:
+        if len(direct_turns) < 2:
             q_num = len(direct_turns) + 1
             raw_q = defense.generate_examination_question(
                 witness_name=witness.name,
@@ -715,8 +715,8 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
                     evidence_action="admitted",
                 )
 
-            next_spk = "defense" if q_num < 3 else "prosecution"
-            next_prompt = f"Next Defence Direct ({q_num + 1}/3)" if q_num < 3 else "Prosecution Cross-Examination (1/3)"
+            next_spk = "defense" if q_num < 2 else "prosecution"
+            next_prompt = f"Next Defence Direct ({q_num + 1}/2)" if q_num < 2 else "Prosecution Cross-Examination (1/2)"
 
             conn = database.get_db_connection()
             with conn:
@@ -741,7 +741,7 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             )
 
         # Prosecution Cross-Examination of Defense Witness: 3 questions
-        elif len(cross_turns) < 3:
+        elif len(cross_turns) < 2:
             cross_num = len(cross_turns) + 1
             raw_cross = prosecution.generate_cross_question(
                 witness_name=witness.name,
@@ -790,7 +790,7 @@ def execute_next_turn(case_id: str) -> NextTurnResponse:
             )
 
             # If cross-examination reached 3 questions, discharge witness
-            if cross_num >= 3:
+            if cross_num >= 2:
                 database.update_witness_status(witness.id, "discharged", case_id=case.id)
                 database.save_courtroom_event(
                     case.id,
