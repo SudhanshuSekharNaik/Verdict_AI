@@ -3,9 +3,9 @@ services:
     name: verdict-ai-backend
     runtime: python
     plan: free
-    healthCheckPath: /health
-    buildCommand: pip install -r backend/requirements-deploy.txt
-    startCommand: cd backend && PYTHONPATH=/opt/render/project/src uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8

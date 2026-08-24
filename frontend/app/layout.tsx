@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Aadalat AI",
-  description: "Evidence-grounded multi-agent courtroom simulation and legal intelligence platform",
+  title: "VerdictAI — Nyay Manch",
+  description: "VerdictAI (Nyay Manch) — Autonomous turn-based AI courtroom simulation and legal reasoning platform grounded in Bharatiya Nyaya Sanhita, Bharatiya Sakshya Adhiniyam & BNSS 2023.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

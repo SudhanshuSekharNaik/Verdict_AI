@@ -33,14 +33,9 @@ export default function DashboardPage() {
       <header className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">⚖️ Aadalat AI</h1>
-            <p className="text-sm text-slate-500">Multi-Agent Courtroom Simulation & Legal Intelligence</p>
+            <h1 className="text-2xl font-bold text-slate-900">⚖️ VerdictAI</h1>
+            <p className="text-sm text-slate-500">Nyay Manch · न्याय मंच — AI Courtroom Simulation</p>
           </div>
-          <nav className="flex gap-4">
-            <Link href="/court-intelligence" className="text-sm text-slate-600 hover:text-slate-900">Court Intelligence</Link>
-            <Link href="/agents" className="text-sm text-slate-600 hover:text-slate-900">Agents</Link>
-            <Link href="/evaluation" className="text-sm text-slate-600 hover:text-slate-900">Evaluation</Link>
-          </nav>
         </div>
       </header>
 
