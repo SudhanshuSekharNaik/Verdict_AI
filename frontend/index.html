@@ -6962,15 +6962,10 @@ async function finalizeWizardAndRunAllHearings() {
     renderCourtroomArena(currentCaseData);
     showView('courtroom');
 
-    // Fast forward all hearings
-    const runRes = await fetch(`${API_BASE}/api/cases/${activeCaseId}/run`, { method: "POST" });
-    if (runRes.ok) {
-      currentCaseData = await runRes.json();
-      renderCourtroomArena(currentCaseData);
-      if (currentCaseData.verdict || currentCaseData.status === 'resolved') {
-        showCinematicVerdictModal(currentCaseData.verdict || { decision: "TRIAL CONCLUDED", decision_basis: "All hearings concluded on the canonical record." });
-      }
-    }
+    // Drive all hearings step-by-step (same as Fast-Forward button)
+    // This avoids a single massive blocking HTTP request.
+    await runAllHearingsDirectly();
+
   } catch (err) {
     alert("Simulation error: " + err.message);
   }
@@ -6978,6 +6973,7 @@ async function finalizeWizardAndRunAllHearings() {
 
 async function runAllHearingsDirectly() {
   if (!activeCaseId) return;
+
   // Stop any running Auto-Play before starting fast-forward
   if (autoPlayInterval) {
     clearInterval(autoPlayInterval);
@@ -6996,6 +6992,22 @@ async function runAllHearingsDirectly() {
     btn.disabled = true;
   }
   try {
+    // Guard 1: Already resolved → just show verdict
+    if (currentCaseData && currentCaseData.status === "resolved") {
+      if (currentCaseData.verdict) showCinematicVerdictModal(currentCaseData.verdict);
+      return;
+    }
+
+    // Guard 2: Case not yet started → start it first
+    const needsStart = !currentCaseData ||
+      ["pending", "filed", "pre_trial"].includes(currentCaseData.status);
+    if (needsStart) {
+      await fetch(`${API_BASE}/api/cases/${activeCaseId}/trial/start`, { method: "POST" });
+      const refreshed = await fetch(`${API_BASE}/api/cases/${activeCaseId}`);
+      currentCaseData = await refreshed.json();
+      renderCourtroomArena(currentCaseData);
+    }
+
     // Poll /step sequentially — each step is one Groq call.
     // Uses _stepLock to prevent Auto-Play or manual Next-Turn from
     // firing a parallel step while this loop is running.
