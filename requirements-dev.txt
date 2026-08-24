@@ -1,0 +1,45 @@
+# VerdictAI — Development / Research / ML Experimentation Requirements
+# =====================================================================
+# DO NOT install this in production.
+# Use: pip install -r requirements-dev.txt  (local dev / research only)
+#
+# These heavy packages are NOT imported by the production backend.
+# They are available for offline experimentation, model training, and
+# local testing of the optional transformers-based classifier fallback.
+# =====================================================================
+
+# Include all production deps
+-r requirements.txt
+
+# === Optional: Transformers-based argument classifier fallback ===
+# The argument_classifier.py uses these with try/except — safe to omit in prod.
+# torch==2.5.1+cpu  # CPU-only wheel — use index below for faster installs
+# --extra-index-url https://download.pytorch.org/whl/cpu
+# torch==2.5.1
+# transformers==4.47.0
+
+# === LangChain / LangGraph — NOT used by current VerdictAI backend ===
+# These are available for future agentic experiments:
+# langchain==0.3.14
+# langchain-core==0.3.28
+# langchain-community==0.3.14
+# langgraph==0.2.69
+
+# === Heavy ML stack — NOT used by current VerdictAI backend ===
+# sentence-transformers==3.3.1
+# datasets==3.2.0
+# evaluate==0.4.3
+# spacy==3.8.3
+# nltk==3.9.1
+# numpy>=1.26.0
+# scikit-learn>=1.5.0
+
+# === Document Processing — NOT used by current VerdictAI backend ===
+# pypdf>=4.3.0
+# pdfplumber>=0.11.0
+# pytesseract>=0.3.10
+# Pillow>=10.4.0
+# python-docx>=1.1.0
+
+# === Knowledge Graph ===
+# networkx>=3.3

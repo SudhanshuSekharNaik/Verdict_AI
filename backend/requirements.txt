@@ -1,8 +1,25 @@
-fastapi>=0.115.0
-uvicorn[standard]>=0.30.6
-groq>=0.11.0
-httpx>=0.27.0
-pydantic>=2.9.2
-python-dotenv>=1.0.1
-requests>=2.31.0
-aiofiles>=24.1.0
+# VerdictAI — Backend Production Requirements
+# All versions pinned for deterministic, fast Render deploys.
+# Groq API handles all LLM inference — no local model weights, no CUDA.
+
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# LLM inference via Groq API (no torch/transformers needed at runtime)
+groq==0.11.0
+
+# HTTP client (used by Groq SDK and direct fetch calls)
+httpx==0.27.0
+
+# Data validation
+pydantic==2.9.2
+
+# Environment config
+python-dotenv==1.0.1
+
+# HTTP utilities
+requests==2.32.3
+
+# Async static file serving (required by FastAPI StaticFiles for frontend/)
+aiofiles==24.1.0
