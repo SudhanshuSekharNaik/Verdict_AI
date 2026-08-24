@@ -3,6 +3,8 @@
 > Nyay Manch · न्याय मंच
 
 **VerdictAI** is an evidence-grounded, multi-agent courtroom simulation platform. Instead of a single LLM producing one response to a legal prompt, it orchestrates distinct AI counsel — Prosecution, Defense, Witnesses, and a Presiding Judge — through a turn-by-turn adversarial hearing that is strictly grounded in a canonical fact record and Indian statutory law (BNS / BSA / BNSS, with IPC cross-references).
+![Uploading Screenshot 2026-08-24 163944.png…]()
+
 
 ## 🚀 Live Demo
 
